@@ -4,7 +4,7 @@
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/splash-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,17 +13,36 @@
       "backgroundColor": "#365a7d"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/ios/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#667eea"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#667eea"
       },
-      "edgeToEdgeEnabled": true
+      "splash": {
+        "image": "./assets/android/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#667eea",
+        "mdpi": "./assets/android/splash.png",
+        "hdpi": "./assets/android/splash.png",
+        "xhdpi": "./assets/android/splash.png",
+        "xxhdpi": "./assets/android/splash.png",
+        "xxxhdpi": "./assets/android/splash.png"
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#667eea"
+      }
     }
   }
 }

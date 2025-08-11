@@ -1,23 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import 'react-native-gesture-handler';
-import { 
-  View, 
-  Text, 
-  ActivityIndicator, 
-  Animated, 
-  Dimensions, 
-  StyleSheet, 
-  StatusBar 
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  StyleSheet,
+  StatusBar
 } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import Navigation from './src/navigation/TabNavigation.js';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-// Mantener el splash screen visible mientras carga la app
+// Prevenir que el splash nativo se oculte automáticamente
 SplashScreen.preventAutoHideAsync();
 
-// Componente del Splash Screen personalizado
 const CustomSplashScreen = ({ onFinish }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.3));
@@ -26,8 +23,8 @@ const CustomSplashScreen = ({ onFinish }) => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        // Pequeña pausa para mostrar el splash
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simula la carga de recursos
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Ocultar el splash nativo
         await SplashScreen.hideAsync();
@@ -35,9 +32,7 @@ const CustomSplashScreen = ({ onFinish }) => {
         // Iniciar animaciones
         startAnimations();
       } catch (error) {
-        console.warn('Error al ocultar splash screen:', error);
-        // Si hay error, continúa igual
-        startAnimations();
+        console.warn(error);
       }
     };
 
@@ -58,22 +53,19 @@ const CustomSplashScreen = ({ onFinish }) => {
         friction: 3,
         useNativeDriver: true,
       }),
+      Animated.loop(
+        Animated.timing(logoRotateAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ),
     ]).start();
 
-    // Animación de rotación continua del logo
-    Animated.loop(
-      Animated.timing(logoRotateAnim, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: true,
-      })
-    ).start();
-
-    // Finalizar splash después de 2.5 segundos
+    // Finalizar splash después de 3 segundos
     setTimeout(() => {
-      console.log('Starting finish animation');
       finishSplash();
-    }, 2500);
+    }, 3000);
   };
 
   const finishSplash = () => {
@@ -99,7 +91,7 @@ const CustomSplashScreen = ({ onFinish }) => {
   });
 
   return (
-    <View style={styles.splashContainer}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#667eea" />
       
       {/* Círculos decorativos */}
@@ -128,7 +120,7 @@ const CustomSplashScreen = ({ onFinish }) => {
 
         {/* Título */}
         <Text style={styles.title}>Mi App</Text>
-        <Text style={styles.subtitle}>Cargando tu experiencia</Text>
+        <Text style={styles.subtitle}>Bienvenido a tu aplicación</Text>
 
         {/* Indicador de carga */}
         <ActivityIndicator 
@@ -137,7 +129,7 @@ const CustomSplashScreen = ({ onFinish }) => {
           style={styles.loader}
         />
         
-        <Text style={styles.loadingText}>Preparando todo...</Text>
+        <Text style={styles.loadingText}>Cargando...</Text>
       </Animated.View>
 
       {/* Footer */}
@@ -148,50 +140,8 @@ const CustomSplashScreen = ({ onFinish }) => {
   );
 };
 
-export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [appIsReady, setAppIsReady] = useState(false);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        // Aquí puedes agregar cualquier lógica de inicialización
-        // Por ejemplo: cargar fuentes, datos, configuraciones, etc.
-        
-        // Simular tiempo de carga (puedes remover esto)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Marcar la app como lista
-        setAppIsReady(true);
-      } catch (e) {
-        console.warn('Error durante la inicialización:', e);
-        setAppIsReady(true); // Continúa aunque haya error
-      }
-    }
-
-    prepare();
-  }, []);
-
-  const handleSplashFinish = () => {
-    console.log('Splash finish called, appIsReady:', appIsReady);
-    setShowSplash(false);
-  };
-
-  // Mostrar splash hasta que se complete la animación
-  if (showSplash) {
-    return <CustomSplashScreen onFinish={handleSplashFinish} />;
-  }
-
-  // Renderizar la app principal una vez que todo esté listo
-  return (
-    <View style={{ flex: 1 }}>
-      <Navigation />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  splashContainer: {
+  container: {
     flex: 1,
     backgroundColor: '#667eea',
     justifyContent: 'center',
@@ -273,3 +223,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default CustomSplashScreen;
