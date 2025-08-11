@@ -13,13 +13,16 @@ const Tab = createBottomTabNavigator();
 function MyTabs() {
   return ( 
     <Tab.Navigator
+    // configuración del navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#365A7D', 
+          backgroundColor: '#365A7D', //color de fondo 
           height: 70,
-          paddingBottom: 10,
+          paddingBottom: -20,
           paddingTop: 10,
           borderTopWidth: 0,
+          borderTopLeftRadius: 23, //redondeo del fondo del navigator (izquierdo)
+          borderTopRightRadius: 23, //redondeo del fondo del navigator (derecho)
           elevation: 8, 
           shadowOffset: { width: 0, height: -2 }, 
           shadowColor: '#000',
@@ -37,14 +40,16 @@ function MyTabs() {
       }}
     >
       <Tab.Screen 
+      //configuración del componente de perfil
         name="Perfil" 
         component={ProfileScreen}
         options={{
+          tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <View style={{ 
               backgroundColor: focused ? '#FFFFFF' : 'transparent',
               borderRadius: 25,
-              padding: 8,
+              padding: 2,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -55,20 +60,23 @@ function MyTabs() {
                     : require('../../assets/TabNavigation/profile-inactive.png') 
                 }
                 style={{
-                  width: 35,
-                  height: 35,
+                  width: 43,
+                  height: 60,
                  
                 }}
                 resizeMode="contain"
+                
               />
             </View>
           ),
         }}
       />
       <Tab.Screen 
+      // configuracion del componente de incio
         name="Inicio" 
         component={HomeScreen}
         options={{
+          tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <View style={{ 
               backgroundColor: focused ? '#FFFFFF' : 'transparent',
@@ -84,8 +92,8 @@ function MyTabs() {
                     : require('../../assets/TabNavigation/home-inactive.png') 
                 }
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 31,
+                  height: 50,
                  
                 }}
                 resizeMode="contain"
@@ -95,9 +103,11 @@ function MyTabs() {
         }}
       />
       <Tab.Screen 
+      // configuracion del componente de carrito
         name="Carrito" 
         component={CartScreen}
         options={{
+          tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <View style={{ 
               backgroundColor: focused ? '#FFFFFF' : 'transparent',
@@ -113,8 +123,8 @@ function MyTabs() {
                     : require('../../assets/TabNavigation/cart-inactive.png') 
                 }
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 31,
+                  height: 47,
                   
                 }}
                 resizeMode="contain"
