@@ -1,7 +1,6 @@
 import React from 'react';
 import 'react-native-gesture-handler';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
 import { Image, View } from 'react-native';
 //import de screens
 import HomeScreen from '../screens/Public/HomeScreen';
@@ -10,7 +9,7 @@ import ProfileScreen from '../screens/Public/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
-function MyTabs() {
+export default function MyTabs() {
   return ( 
     <Tab.Navigator
     // configuración del navigator
@@ -36,7 +35,7 @@ function MyTabs() {
           fontWeight: '600',
           marginTop: 4,
         },
-        headerShown: false,
+        headerShown: false, // Los headers ahora los maneja el drawer
       }}
     >
       <Tab.Screen 
@@ -135,12 +134,4 @@ function MyTabs() {
       />
     </Tab.Navigator>
   );
-}
-
-export default function Navigation() {
-    return (
-        <NavigationContainer>
-            <MyTabs />
-        </NavigationContainer>
-    );
 }

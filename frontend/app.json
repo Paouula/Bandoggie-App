@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": " ",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -33,7 +33,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#232323",
+          "backgroundColor": "#365a7d",
           "image": "./assets/splash-icon.png",
           "dark": {
             "image": "./assets/splash-icon-dark.png",

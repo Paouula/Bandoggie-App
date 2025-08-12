@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import 'react-native-gesture-handler';
 import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import Navigation from './src/navigation/TabNavigation.js';
+import { NavigationContainer } from '@react-navigation/native';
+import DrawerNavigation from './src/navigation/DrawerNavigation.js';;
 import BandoggieSplashScreen from './src/components/SplashScreen.js';
 
 // Mantener el splash screen nativo visible mientras carga la app
@@ -40,7 +41,9 @@ export default function App() {
   // Renderizar la app principal
   return (
     <View style={{ flex: 1 }}>
-      <Navigation />
+    <NavigationContainer>
+      <DrawerNavigation />
+    </NavigationContainer>
     </View>
   );
 }
