@@ -4,45 +4,44 @@
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/splash-icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#365a7d"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "splash": {
-        "image": "./assets/ios/splash.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#667eea"
+      "icon": {
+        "light": "./assets/ios/ios-light.png",
+        "dark": "./assets/ios/ios-dark.png"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#667eea"
+        "backgroundColor": "#ffffff"
       },
-      "splash": {
-        "image": "./assets/android/splash.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#667eea",
-        "mdpi": "./assets/android/splash.png",
-        "hdpi": "./assets/android/splash.png",
-        "xhdpi": "./assets/android/splash.png",
-        "xxhdpi": "./assets/android/splash.png",
-        "xxxhdpi": "./assets/android/splash.png"
-      }
+      "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#667eea"
-      }
-    }
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#232323",
+          "image": "./assets/splash-icon.png",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ]
   }
 }

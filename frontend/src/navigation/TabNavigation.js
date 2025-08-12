@@ -4,9 +4,9 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { Image, View } from 'react-native';
 //import de screens
-import HomeScreen from '../screens/HomeScreen';
-import CartScreen from '../screens/CartScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import HomeScreen from '../screens/Public/HomeScreen';
+import CartScreen from '../screens/Public/CartScreen';
+import ProfileScreen from '../screens/Public/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,13 +16,13 @@ function MyTabs() {
     // configuración del navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#365A7D', //color de fondo 
+          backgroundColor: '#365A7D', 
           height: 70,
           paddingBottom: -20,
           paddingTop: 10,
           borderTopWidth: 0,
-          borderTopLeftRadius: 23, //redondeo del fondo del navigator (izquierdo)
-          borderTopRightRadius: 23, //redondeo del fondo del navigator (derecho)
+          borderTopLeftRadius: 23, 
+          borderTopRightRadius: 23, 
           elevation: 8, 
           shadowOffset: { width: 0, height: -2 }, 
           shadowColor: '#000',

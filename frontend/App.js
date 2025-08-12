@@ -1,275 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import 'react-native-gesture-handler';
-import { 
-  View, 
-  Text, 
-  ActivityIndicator, 
-  Animated, 
-  Dimensions, 
-  StyleSheet, 
-  StatusBar 
-} from 'react-native';
+import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import Navigation from './src/navigation/TabNavigation.js';
+import BandoggieSplashScreen from './src/components/SplashScreen.js';
 
-const { width } = Dimensions.get('window');
-
-// Mantener el splash screen visible mientras carga la app
+// Mantener el splash screen nativo visible mientras carga la app
 SplashScreen.preventAutoHideAsync();
-
-// Componente del Splash Screen personalizado
-const CustomSplashScreen = ({ onFinish }) => {
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [scaleAnim] = useState(new Animated.Value(0.3));
-  const [logoRotateAnim] = useState(new Animated.Value(0));
-
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        // Pequeña pausa para mostrar el splash
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Ocultar el splash nativo
-        await SplashScreen.hideAsync();
-        
-        // Iniciar animaciones
-        startAnimations();
-      } catch (error) {
-        console.warn('Error al ocultar splash screen:', error);
-        // Si hay error, continúa igual
-        startAnimations();
-      }
-    };
-
-    initApp();
-  }, []);
-
-  const startAnimations = () => {
-    // Animación de entrada
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 10,
-        friction: 3,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Animación de rotación continua del logo
-    Animated.loop(
-      Animated.timing(logoRotateAnim, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: true,
-      })
-    ).start();
-
-    // Finalizar splash después de 2.5 segundos
-    setTimeout(() => {
-      console.log('Starting finish animation');
-      finishSplash();
-    }, 2500);
-  };
-
-  const finishSplash = () => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1.2,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onFinish && onFinish();
-    });
-  };
-
-  const logoRotate = logoRotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  return (
-    <View style={styles.splashContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#667eea" />
-      
-      {/* Círculos decorativos */}
-      <View style={[styles.circle, styles.circle1]} />
-      <View style={[styles.circle, styles.circle2]} />
-
-      {/* Contenido principal */}
-      <Animated.View 
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          }
-        ]}
-      >
-        {/* Logo animado */}
-        <Animated.View 
-          style={[
-            styles.logoContainer,
-            { transform: [{ rotate: logoRotate }] }
-          ]}
-        >
-          <Text style={styles.logo}>🚀</Text>
-        </Animated.View>
-
-        {/* Título */}
-        <Text style={styles.title}>Mi App</Text>
-        <Text style={styles.subtitle}>Cargando tu experiencia</Text>
-
-        {/* Indicador de carga */}
-        <ActivityIndicator 
-          size="large" 
-          color="white"
-          style={styles.loader}
-        />
-        
-        <Text style={styles.loadingText}>Preparando todo...</Text>
-      </Animated.View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Hecho con ❤️ en React Native</Text>
-      </View>
-    </View>
-  );
-};
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
-    async function prepare() {
+    async function prepareApp() {
       try {
-        // Aquí puedes agregar cualquier lógica de inicialización
-        // Por ejemplo: cargar fuentes, datos, configuraciones, etc.
+        // Simular tiempo de preparación 
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Simular tiempo de carga (puedes remover esto)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Marcar la app como lista
-        setAppIsReady(true);
       } catch (e) {
-        console.warn('Error durante la inicialización:', e);
-        setAppIsReady(true); // Continúa aunque haya error
+        console.warn('Error durante la preparación de la app:', e);
       }
     }
 
-    prepare();
+    prepareApp();
   }, []);
 
   const handleSplashFinish = () => {
-    console.log('Splash finish called, appIsReady:', appIsReady);
-    setShowSplash(false);
+    // Pequeña pausa antes de mostrar la app 
+    setTimeout(() => {
+      setShowSplash(false);
+    }, 100);
   };
 
-  // Mostrar splash hasta que se complete la animación
+  // Mostrar splash screen hasta que termine la animación
   if (showSplash) {
-    return <CustomSplashScreen onFinish={handleSplashFinish} />;
+    return <BandoggieSplashScreen onFinish={handleSplashFinish} />;
   }
 
-  // Renderizar la app principal una vez que todo esté listo
+  // Renderizar la app principal
   return (
     <View style={{ flex: 1 }}>
       <Navigation />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  splashContainer: {
-    flex: 1,
-    backgroundColor: '#667eea',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  circle1: {
-    width: width * 0.8,
-    height: width * 0.8,
-    top: -width * 0.2,
-    right: -width * 0.2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  circle2: {
-    width: width * 0.6,
-    height: width * 0.6,
-    bottom: -width * 0.1,
-    left: -width * 0.1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  circle: {
-    position: 'absolute',
-    borderRadius: width * 0.4,
-  },
-  content: {
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  logo: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#667eea',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 10,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 50,
-    textAlign: 'center',
-    fontWeight: '300',
-  },
-  loader: {
-    marginBottom: 20,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 50,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-  },
-});
