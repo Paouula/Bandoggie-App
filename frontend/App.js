@@ -3,10 +3,9 @@ import 'react-native-gesture-handler';
 import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
-import DrawerNavigation from './src/navigation/DrawerNavigation.js';;
-import BandoggieSplashScreen from './src/components/SplashScreen.js';
+import DrawerNavigation from './src/navigation/DrawerNavigation';
+import BandoggieSplashScreen from './src/components/SplashScreen';
 
-// Mantener el splash screen nativo visible mientras carga la app
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
@@ -14,36 +13,24 @@ export default function App() {
 
   useEffect(() => {
     async function prepareApp() {
-      try {
-        // Simular tiempo de preparación 
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-      } catch (e) {
-        console.warn('Error durante la preparación de la app:', e);
-      }
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
-
     prepareApp();
   }, []);
 
   const handleSplashFinish = () => {
-    // Pequeña pausa antes de mostrar la app 
-    setTimeout(() => {
-      setShowSplash(false);
-    }, 100);
+    setTimeout(() => setShowSplash(false), 100);
   };
 
-  // Mostrar splash screen hasta que termine la animación
   if (showSplash) {
     return <BandoggieSplashScreen onFinish={handleSplashFinish} />;
   }
 
-  // Renderizar la app principal
   return (
     <View style={{ flex: 1 }}>
-    <NavigationContainer>
-      <DrawerNavigation />
-    </NavigationContainer>
+      <NavigationContainer>
+        <DrawerNavigation />
+      </NavigationContainer>
     </View>
   );
 }

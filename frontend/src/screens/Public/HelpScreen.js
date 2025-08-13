@@ -5,10 +5,10 @@ import { View, Text, StyleSheet } from 'react-native';
 const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Pantalla de configuracion
+      <Text style={styles.titulo}>Pantalla de Ayuda
               </Text>
       <Text style={styles.descripcion}>
-        Página para comprobar funcionalidad, cambienla según sea necesario a las que están en figma. 
+        Página para comprobar funcionalidad, cambienla según sea necesario a las que están en figma.
       </Text>
     </View>
   );
