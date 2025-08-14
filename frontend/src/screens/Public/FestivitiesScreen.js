@@ -2,19 +2,19 @@ import React from 'react';
 import 'react-native-gesture-handler';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProfileScreen = ({ navigation }) => {
+const FestivitiesScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Pantalla de configuracion
+      <Text style={styles.titulo}>Pantalla de Festividades
               </Text>
       <Text style={styles.descripcion}>
-        Página para comprobar funcionalidad, cambienla según sea necesario a las que están en figma. 
+        Página para comprobar funcionalidad, cambienla según sea necesario a las que están en figma.
       </Text>
     </View>
   );
 };
 
-export default ProfileScreen;
+export default FestivitiesScreen;
 
 const styles = StyleSheet.create({
   container: {

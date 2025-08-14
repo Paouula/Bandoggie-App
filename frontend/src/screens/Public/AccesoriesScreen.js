@@ -2,10 +2,10 @@ import React from 'react';
 import 'react-native-gesture-handler';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProfileScreen = ({ navigation }) => {
+const AccesoriesScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Pantalla de Sobre nosotros
+      <Text style={styles.titulo}>Pantalla de accesorios
               </Text>
       <Text style={styles.descripcion}>
         Página para comprobar funcionalidad, cambienla según sea necesario a las que están en figma.
@@ -14,7 +14,7 @@ const ProfileScreen = ({ navigation }) => {
   );
 };
 
-export default ProfileScreen;
+export default AccesoriesScreen;
 
 const styles = StyleSheet.create({
   container: {

@@ -18,7 +18,7 @@ export default function DrawerNavigation() {
       <Drawer.Screen
         name="Main"
         component={MainLayout}
-        options={{ title: 'Inicio' }}
+        options={{ title: 'Bandoggie' }}
       />
     </Drawer.Navigator>
   );
@@ -43,9 +43,10 @@ function CustomDrawerContent({ navigation }) {
 
       <View style={styles.drawerContent}>
         <DrawerItem label="Inicio" onPress={() => navigateTo('Inicio')} />
-        <DrawerItem label="Configuración" onPress={() => navigateTo('Configuración')} />
-        <DrawerItem label="Ayuda" onPress={() => navigateTo('Ayuda')} />
-        <DrawerItem label="Acerca de" onPress={() => navigateTo('AcercaDe')} />
+        <DrawerItem label="Bandanas" onPress={() => navigateTo('Bandanas')} />
+        <DrawerItem label="Collares" onPress={() => navigateTo('Collares')} />
+        <DrawerItem label="Accesorios" onPress={() => navigateTo('Accesorios')} />
+        <DrawerItem label="Festividades" onPress={() => navigateTo('Festividades')} />
       </View>
     </View>
   );
