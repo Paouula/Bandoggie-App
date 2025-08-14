@@ -84,31 +84,31 @@ const EmpleadosScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Gradient Background */}
-      <LinearGradient
-        colors={['#E8F4FD', '#F0E8FF', '#FFF8E1']}
-        style={styles.gradientBackground}
-      >
-        {/* Title Section */}
-        <View style={styles.titleSection}>
+      {/* Title Section with Gradient Background */}
+      <View style={styles.titleSection}>
+        <LinearGradient
+          colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
+          style={styles.titleGradientBackground}
+        >
           <Text style={styles.title}>Empleados</Text>
           
           {/* Logo/Icon */}
           <View style={styles.logoContainer}>
-            <LinearGradient
-              colors={['#FFE082', '#FFF9C4']}
-              style={styles.logoBackground}
-            >
+            <View style={styles.logoBackground}>
               <Image 
                 source={require('../../../../assets/Employee/EmployeeHeader.png')}
                 style={styles.logoImage}
-                resizeMode="cover"
+                resizeMode="contain"
               />
-            </LinearGradient>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
+      </View>
+
+
 
         {/* Search and Add Section */}
+        <View style={styles.contentContainer}>
         <View style={styles.searchSection}>
           <View style={styles.searchContainer}>
             <TextInput
@@ -137,7 +137,7 @@ const EmpleadosScreen = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
         />
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 };
@@ -150,24 +150,25 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: -10,
     paddingVertical: 15,
     backgroundColor: '#fff',
   },
-  menuButton: {
-    marginRight: 15,
-  },
-  gradientBackground: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
   titleSection: {
+    paddingHorizontal: -30,
+    marginBottom: 20,
+  },
+  titleGradientBackground: {
     alignItems: 'center',
     paddingVertical: 30,
+    paddingHorizontal: 20,
+    borderBottomRightRadius: 50,
+    borderBottomLeftRadius: 50,
+    marginHorizontal: 10,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 35,
+    fontFamily: 'BalooBhaijaan2_700Bold',
     color: '#000',
     marginBottom: 30,
   },
@@ -175,19 +176,37 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoBackground: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 160,
+    height: 160,
+    marginTop: 30,
+    marginBottom: -100,
+    borderRadius: 80,
+    backgroundColor: '#FDF7DF',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  logoIcon: {
-    alignItems: 'center',
+  logoImage: {
+    width: 100,
+    height: 100,
+  },
+  contentContainer: {
+    flex: 1,
+    marginTop: 57,
+    backgroundColor: '#FAF3F9',
   },
   searchSection: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: 30,
     gap: 15,
   },
   searchContainer: {
@@ -196,8 +215,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -218,10 +237,10 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
+    backgroundColor: '#36A360',
+    paddingHorizontal: 26,
+    paddingVertical: 10,
+    borderRadius: 15,
     gap: 8,
   },
   addButtonText: {

@@ -1,21 +1,22 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyTabs from './TabNavigation';
-import SettingsScreen from '../screens/Public/SettingsScreen';
-import HelpScreen from '../screens/Public/HelpScreen';
-//import AboutScreen from '../screens/Public/AboutScreen';
-import EmpleadosScreen from '../screens/Private/Employees/Employee'
+import BandanasScreen from '../screens/Public/BandanasScreen';
+import CollarsScreen from '../screens/Public/CollarsScreen';
+import AccesoriesScreen from '../screens/Public/AccesoriesScreen';
+import FestivitiesScreen from '../screens/Public/FestivitiesScreen';
+//import EmpleadosScreen from '../screens/Private/Employees/Employee'
 
 const Stack = createNativeStackNavigator();
 
 export default function MainLayout() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Cambiamos "Tabs" por "BottomTabs" para evitar el warning */}
       <Stack.Screen name="BottomTabs" component={MyTabs} />
-      <Stack.Screen name="Configuración" component={SettingsScreen} />
-      <Stack.Screen name="Ayuda" component={HelpScreen} />
-      <Stack.Screen name="AcercaDe" component={EmpleadosScreen} />
+      <Stack.Screen name="Bandanas" component={BandanasScreen} />
+      <Stack.Screen name="Collares" component={CollarsScreen} />
+      <Stack.Screen name="Accesorios" component={AccesoriesScreen} />
+      <Stack.Screen name="Festividades" component={FestivitiesScreen} />
     </Stack.Navigator>
   );
 }
