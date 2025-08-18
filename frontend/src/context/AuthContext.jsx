@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import useFetchLogin from "../hooks/Login/useFetchLogin.js";
-import { API_FETCH_JSON } from "../config.js";
-import toast from "react-hot-toast";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import useFetchLogin from "../hooks/Login/useFetchLogin";
+import { API_FETCH_JSON } from "../config";
+import Toast from "react-native-toast-message";
 
 const AuthContext = createContext();
 
@@ -10,48 +11,35 @@ export const AuthProvider = ({ children }) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [loadingVerification, setLoadingVerification] = useState(true);
-  const [verificationInfo, setVerificationInfo] = useState({
-    email: "",
-    role: "",
-  });
+  const [verificationInfo, setVerificationInfo] = useState({ email: "", role: "" });
 
-  // Usar el hook personalizado para login
   const { handleLogin } = useFetchLogin();
 
   const Login = async (email, password) => {
     try {
-      // Usar handleLogin del hook personalizado
       const data = await handleLogin(email, password);
 
-      // Procesar respuesta exitosa
       const userData = {
         id: data.user?.id,
         email: data.user?.email || email,
         userType: data.userType,
         name: data.user?.name,
-        // Agregar otros campos que vengan del backend
       };
 
-      // Guardar usuario en estado y localStorage
       setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      // Limpiar información de verificación al hacer login exitoso
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
       clearVerificationInfo();
 
       return {
         success: true,
         message: data.message || "Sesión iniciada correctamente",
         userType: userData.userType,
-        user: userData
+        user: userData,
       };
     } catch (error) {
-      console.error("Error en Login (AuthContext):", error);
-      
-      // El toast ya se maneja en useFetchLogin, solo devolvemos el error
-      return { 
-        success: false, 
-        message: error.message || "Error al iniciar sesión" 
+      return {
+        success: false,
+        message: error.message || "Error al iniciar sesión",
       };
     }
   };
@@ -63,35 +51,30 @@ export const AuthProvider = ({ children }) => {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
-      
-      toast.success("Sesión cerrada correctamente");
+
+      Toast.show({ type: "success", text1: "Sesión cerrada correctamente" });
     } catch (error) {
-      console.error("Error en logout:", error);
-      toast.error("Error al cerrar sesión");
+      Toast.show({ type: "error", text1: "Error al cerrar sesión" });
     } finally {
-      // Limpiar estado y localStorage independientemente del resultado
-      localStorage.removeItem("user");
-      localStorage.removeItem("verificationInfo");
+      await AsyncStorage.removeItem("user");
+      await AsyncStorage.removeItem("verificationInfo");
       setUser(null);
       setVerificationInfo({ email: "", role: "" });
       setPendingVerification(false);
     }
   };
 
-  // Función para actualizar verificationInfo de forma persistente
-  const updateVerificationInfo = (info) => {
+  const updateVerificationInfo = async (info) => {
     setVerificationInfo(info);
-    localStorage.setItem("verificationInfo", JSON.stringify(info));
+    await AsyncStorage.setItem("verificationInfo", JSON.stringify(info));
   };
 
-  // Función para limpiar verificationInfo
-  const clearVerificationInfo = () => {
+  const clearVerificationInfo = async () => {
     setVerificationInfo({ email: "", role: "" });
-    localStorage.removeItem("verificationInfo");
+    await AsyncStorage.removeItem("verificationInfo");
     setPendingVerification(false);
   };
 
-  // Función para verificar autenticación
   const checkAuthStatus = async () => {
     try {
       const response = await API_FETCH_JSON("auth/me", {
@@ -106,26 +89,23 @@ export const AuthProvider = ({ children }) => {
           userType: response.user.userType,
           name: response.user.name,
         };
-        
+
         setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
-        
-        // Si el usuario está autenticado, limpiar verificationInfo
-        const storedVerificationInfo = localStorage.getItem("verificationInfo");
+        await AsyncStorage.setItem("user", JSON.stringify(userData));
+
+        const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
         if (storedVerificationInfo) {
-          clearVerificationInfo();
+          await clearVerificationInfo();
         }
-        
+
         return true;
       }
       return false;
     } catch (error) {
-      console.error("Error verificando autenticación:", error);
       return false;
     }
   };
 
-  // Función para verificar estado de verificación pendiente
   const checkPendingVerification = async () => {
     try {
       const response = await API_FETCH_JSON("auth/pending-verification", {
@@ -136,20 +116,18 @@ export const AuthProvider = ({ children }) => {
       const hasPendingVerification = response.pending || false;
       setPendingVerification(hasPendingVerification);
 
-      const storedVerificationInfo = localStorage.getItem("verificationInfo");
-      
+      const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
+
       if (!hasPendingVerification && storedVerificationInfo) {
-        clearVerificationInfo();
+        await clearVerificationInfo();
       }
 
       if (hasPendingVerification && !storedVerificationInfo) {
-        console.warn("No se han encontrado los datos de verificación necesarios");
-        toast.error("No se han encontrado los datos de verificación necesarios");
+        Toast.show({ type: "error", text1: "No se han encontrado los datos de verificación necesarios" });
       }
 
       return hasPendingVerification;
     } catch (error) {
-      console.error("Error al obtener estado de verificación:", error);
       setPendingVerification(false);
       return false;
     }
@@ -157,35 +135,27 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // Recuperar usuario del localStorage
-      const storedUser = localStorage.getItem("user");
+      const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         try {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-        } catch (error) {
-          console.error("Error al parsear usuario del localStorage:", error);
-          localStorage.removeItem("user");
+          setUser(JSON.parse(storedUser));
+        } catch {
+          await AsyncStorage.removeItem("user");
         }
       }
 
-      // Recuperar verificationInfo del localStorage
-      const storedVerificationInfo = localStorage.getItem("verificationInfo");
+      const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
       if (storedVerificationInfo) {
         try {
-          const verificationData = JSON.parse(storedVerificationInfo);
-          setVerificationInfo(verificationData);
-        } catch (error) {
-          console.error("Error al parsear verificationInfo del localStorage:", error);
-          localStorage.removeItem("verificationInfo");
+          setVerificationInfo(JSON.parse(storedVerificationInfo));
+        } catch {
+          await AsyncStorage.removeItem("verificationInfo");
         }
       }
 
-      // Verificar autenticación con el backend
       await checkAuthStatus();
       setLoadingUser(false);
 
-      // Verificar estado de verificación pendiente
       await checkPendingVerification();
       setLoadingVerification(false);
     };
@@ -193,53 +163,33 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  // Funciones de utilidad para verificar roles
-  const isEmployee = () => user?.userType === "employee";
-  const isVet = () => user?.userType === "vet";
-  const isClient = () => user?.userType === "client";
-  const isPublicUser = () => isVet() || isClient();
-  const isAuthenticated = () => !!user;
-
   const contextValue = {
-    // Estado
     user,
     loadingUser,
     pendingVerification,
     loadingVerification,
     verificationInfo,
-    
-    // Funciones de autenticación
     Login,
     logout,
     checkAuthStatus,
-    
-    // Funciones de verificación
     setPendingVerification,
     setLoadingVerification,
     setVerificationInfo,
     updateVerificationInfo,
     clearVerificationInfo,
     checkPendingVerification,
-    
-    // Funciones de utilidad
-    isEmployee,
-    isVet,
-    isClient,
-    isPublicUser,
-    isAuthenticated,
+    isEmployee: () => user?.userType === "employee",
+    isVet: () => user?.userType === "vet",
+    isClient: () => user?.userType === "client",
+    isPublicUser: () => ["vet", "client"].includes(user?.userType),
+    isAuthenticated: () => !!user,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de AuthProvider");
-  }
+  if (!context) throw new Error("useAuth debe ser usado dentro de AuthProvider");
   return context;
 };
