@@ -1,0 +1,25 @@
+/* Estilos base para todos los inputs */
+.custom-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #b4ceec;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Raleway', sans-serif;
+  background: #fafdff;
+  color: #365A7D;
+  transition: border 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+/* Estilo cuando el input está enfocado */
+.custom-input:focus {
+  outline: none;
+  border: 2px solid #ff9900;
+  box-shadow: 0 0 0 2px #ffe0b2;
+  background-color: #fffdfa;
+}
+
+/* Input específico para Login (con espacio para ícono a la derecha) */
+.input-login {
+  padding-right: 45px
+}
