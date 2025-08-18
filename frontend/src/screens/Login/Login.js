@@ -15,10 +15,10 @@ import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 
-// Importar componentes personalizados
-import InputComponent from "../components/InputComponent";
-import ButtonComponent from "../components/ButtonComponent";
-import PasswordInput from "../components/PasswordInput";
+// Importar componentes personalizados para toda la app
+import InputComponent from "../../components/Input/Input.js";
+import ButtonComponent from "../../components/Button/Button.js";
+import PasswordInput from "../../components/InputPassword/InputPassword.js";
 import { useAuth } from "../../context/AuthContext";
 
 const LoginScreen = () => {
@@ -32,7 +32,7 @@ const LoginScreen = () => {
     reset,
     formState: { errors, isValid },
   } = useForm({
-    mode: "onChange", // Validación en tiempo real
+    mode: "onChange", // Valida los campos
     defaultValues: {
       email: "",
       password: "",
