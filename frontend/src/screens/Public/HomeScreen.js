@@ -95,6 +95,20 @@ export default function MainScreen({ navigation }) {
     },
   ];
 
+  // Función para determinar la pantalla a navegar
+  const getNavigationRoute = (title) => {
+    switch(title) {
+      case 'Bandanas':
+        return 'Bandanas';
+      case 'Collares':
+        return 'Collares';
+      case 'Accesorios':
+        return 'Accesorios';
+      default:
+        return 'BottomTabs';
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header Section */}
@@ -117,17 +131,27 @@ export default function MainScreen({ navigation }) {
           key={category.id}
           style={[styles.categoryCard, { marginBottom: 20 }]}
           onPress={() => {
-            // Aquí puedes navegar a la categoría específica
-            console.log(`Navigating to ${category.title}`);
+            // Navegar cuando se toca toda la card
+            const route = getNavigationRoute(category.title);
+            navigation.navigate(route);
+            console.log(`Navigating to ${route} from card`);
           }}
         >
           <View style={[styles.categoryContent, { backgroundColor: category.color }]}>
             <View style={styles.categoryTextContainer}>
               <Text style={styles.categoryTitle}>{category.title}</Text>
               <Text style={styles.categoryDescription}>{category.description}</Text>
-              <TouchableOpacity style={styles.seeMoreButton}>
+              <TouchableOpacity 
+                style={styles.seeMoreButton}
+                onPress={(e) => {
+                  // Evitar que se propague el evento al TouchableOpacity padre
+                  e.stopPropagation();
+                  const route = getNavigationRoute(category.title);
+                  navigation.navigate(route);
+                  console.log(`Navigating to ${route} from Ver más button`);
+                }}
+              >
                 <Text style={styles.seeMoreText}>Ver más</Text>
-                
               </TouchableOpacity>
             </View>
             <View style={styles.categoryImageContainer}>
@@ -161,7 +185,7 @@ export default function MainScreen({ navigation }) {
             key={category.id}
             style={[styles.seasonalCard, { backgroundColor: category.color }]}
             onPress={() => {
-              console.log(`Navigating to ${category.title}`);
+              console.log(`Festividad seleccionada: ${category.title}`);
             }}
           >
             <View style={styles.seasonalImageContainer}>

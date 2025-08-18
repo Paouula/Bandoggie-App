@@ -11,7 +11,6 @@ export default function MainLayout() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BottomTabs" component={MyTabs} />
-      {/* Nombres que coinciden con el DrawerNavigation */}
       <Stack.Screen name="Bandanas" component={BandanasScreen} />
       <Stack.Screen name="Collares" component={CollarsScreen} />
       <Stack.Screen name="Accesorios" component={AccesoriesScreen} />
