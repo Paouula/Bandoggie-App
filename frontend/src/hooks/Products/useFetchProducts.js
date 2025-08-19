@@ -1,10 +1,7 @@
-import { toast } from 'react-hot-toast';
-//Importo las funciones globales para realizar el fetch
-
+import Toast from 'react-native-toast-message';
 import { API_FETCH_FORM, API_FETCH_JSON } from '../../config';
 
 // Función reutilizable para construir el FormData
-
 const buildFormData = (productData) => {
     const {
         nameProduct,
@@ -41,25 +38,26 @@ const buildFormData = (productData) => {
     return formData;
 };
 
-//Constante que contendra los metodos
-
+// Constante que contendrá los métodos
 const useFetchProducts = () => {
-    //Declaro el endpoint
-
     const endpoint = 'products';
 
-    //Obtiene todos los productos
+    // Obtiene todos los productos
     const handleGetProducts = async () => {
         try {
             const data = await API_FETCH_JSON(endpoint);
             return data;
         } catch (error) {
-            toast.error('Error al obtener los productos');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Error al obtener los productos'
+            });
             throw error;
         }
     };
 
-    //Crea un nuevo producto
+    // Crea un nuevo producto
     const handlePostProducts = async (productData) => {
         try {
             const formData = buildFormData(productData);
@@ -67,16 +65,24 @@ const useFetchProducts = () => {
                 method: 'POST',
             });
 
-            toast.success('Producto creado correctamente');
+            Toast.show({
+                type: 'success',
+                text1: 'Éxito',
+                text2: 'Producto creado correctamente'
+            });
             return data;
 
         } catch (error) {
-            toast.error('Error al crear el producto');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Error al crear el producto'
+            });
             throw error;
         }
     };
 
-    //Actualiza un producto ya existente
+    // Actualiza un producto ya existente
     const handlePutProducts = async (id, productData) => {
         try {
             const formData = buildFormData(productData);
@@ -84,23 +90,39 @@ const useFetchProducts = () => {
                 method: 'PUT',
             });
 
-            toast.success('Producto actualizado correctamente');
+            Toast.show({
+                type: 'success',
+                text1: 'Éxito',
+                text2: 'Producto actualizado correctamente'
+            });
             return data;
         } catch (error) {
-            toast.error('Error al actualizar el producto');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Error al actualizar el producto'
+            });
             throw error;
         }
     };
 
-    //Elimina un producto
+    // Elimina un producto
     const handleDeleteProducts = async (id) => {
         try {
             await API_FETCH_JSON(`${endpoint}/${id}`, {
                 method: 'DELETE',
             });
-            toast.success('Producto eliminado correctamente');
+            Toast.show({
+                type: 'success',
+                text1: 'Éxito',
+                text2: 'Producto eliminado correctamente'
+            });
         } catch (error) {
-            toast.error('Error al eliminar el producto');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Error al eliminar el producto'
+            });
             throw error;
         }
     };

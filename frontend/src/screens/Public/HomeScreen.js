@@ -57,6 +57,7 @@ export default function MainScreen({ navigation }) {
       color: '#FF6B6B',
       icon: 'gift',
       image: require('../../../assets/Home/Dog.png'),
+      screen: 'FestivitiesScreen', // CONSISTENTE: Usar el mismo nombre para todas
     },
     {
       id: 2,
@@ -64,13 +65,15 @@ export default function MainScreen({ navigation }) {
       color: '#FF9F43',
       icon: 'skull',
       image: require('../../../assets/Home/Dog2.png'),
+      screen: 'FestivitiesScreen', // CORREGIDO: Cambiar a FestivitiesScreen
     },
     {
       id: 3,
       title: 'San Valentín',
       color: '#FFB3D9',
       icon: 'heart',
-       image: require('../../../assets/Home/Dog3.png'),
+      image: require('../../../assets/Home/Dog3.png'),
+      screen: 'FestivitiesScreen', // CORREGIDO: Cambiar a FestivitiesScreen
     },
     {
       id: 4,
@@ -78,13 +81,15 @@ export default function MainScreen({ navigation }) {
       color: '#4299E1',
       icon: 'flag',
       image: require('../../../assets/Home/Dog4.png'),
+      screen: 'FestivitiesScreen', // CORREGIDO: Cambiar a FestivitiesScreen
     },
     {
       id: 5,
       title: 'Año Nuevo',
       color: '#9F7AEA',
       icon: 'star',
-       image: require('../../../assets/Home/Dog6.png'),
+      image: require('../../../assets/Home/Dog6.png'),
+      screen: 'FestivitiesScreen', // CORREGIDO: Cambiar a FestivitiesScreen
     },
     {
       id: 6,
@@ -92,10 +97,11 @@ export default function MainScreen({ navigation }) {
       color: '#F6AD55',
       icon: 'balloon',
       image: require('../../../assets/Home/Dog5.png'),
+      screen: 'FestivitiesScreen', // CORREGIDO: Cambiar a FestivitiesScreen
     },
   ];
 
-  // Función para determinar la pantalla a navegar
+  // Función para determinar la pantalla a navegar para categorías principales
   const getNavigationRoute = (title) => {
     switch(title) {
       case 'Bandanas':
@@ -106,6 +112,24 @@ export default function MainScreen({ navigation }) {
         return 'Accesorios';
       default:
         return 'BottomTabs';
+    }
+  };
+
+  // Función para manejar la navegación de festividades
+  const handleFestivityPress = (festivity) => {
+    console.log(`Navegando a ${festivity.screen} para ${festivity.title}`);
+    
+    try {
+      // Navegar a la pantalla de festividades con parámetros
+      navigation.navigate(festivity.screen, {
+        festivityName: festivity.title,
+        festivityId: festivity.id,
+        festivityColor: festivity.color,
+      });
+    } catch (error) {
+      console.error('Error al navegar:', error);
+      // Fallback: intentar navegar sin parámetros
+      navigation.navigate('FestivitiesScreen');
     }
   };
 
@@ -184,9 +208,8 @@ export default function MainScreen({ navigation }) {
           <TouchableOpacity
             key={category.id}
             style={[styles.seasonalCard, { backgroundColor: category.color }]}
-            onPress={() => {
-              console.log(`Festividad seleccionada: ${category.title}`);
-            }}
+            onPress={() => handleFestivityPress(category)}
+            activeOpacity={0.8}
           >
             <View style={styles.seasonalImageContainer}>
               {/* Imagen de festividad o ícono de respaldo */}
