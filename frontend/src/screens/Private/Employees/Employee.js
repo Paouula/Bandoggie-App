@@ -61,6 +61,7 @@ const EmpleadosScreen = () => {
       
       <View style={styles.detallesEmpleado}>
         <View style={styles.detalleRow}>
+          
           <Text style={styles.detalleLabel}>Nombre:</Text>
           <Text style={styles.detalleValue}>{item.nombre}</Text>
         </View>
