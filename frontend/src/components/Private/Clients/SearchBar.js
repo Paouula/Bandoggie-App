@@ -17,11 +17,6 @@ const SearchBar = ({ searchText, onSearchChange, onAddPress, placeholder = "Busc
           <Ionicons name="search" size={20} color="#666" />
         </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
-        <Ionicons name="add" size={18} color="white" />
-        <Text style={styles.addButtonText}>Agregar</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -59,15 +54,6 @@ const styles = StyleSheet.create({
   },
   searchButton: {
     padding: 5,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#36A360',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 15,
-    gap: 8,
   },
   addButtonText: {
     color: 'white',

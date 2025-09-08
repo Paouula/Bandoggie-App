@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Header from '../../../components/Private/Clients/Header';
 import SearchBar from '../../../components/Private/Clients/SearchBar';
 import ClientList from '../../../components/Private/Clients/ClientList';
 
 const ClientsScreen = () => {
   const [searchText, setSearchText] = useState('');
-  
+
   // Datos de ejemplo de clientes
   const [clientes] = useState([
     {
@@ -36,34 +36,31 @@ const ClientsScreen = () => {
     cliente.telefono.includes(searchText)
   );
 
-  // Handlers
+  // Handler de búsqueda
   const handleSearchChange = (text) => {
     setSearchText(text);
   };
 
-  const handleAddPress = () => {
-    console.log('Agregar nuevo cliente');
-    // Aquí puedes agregar la lógica para agregar un cliente
+  // Configuración del header
+  const headerItem = {
+    nombre: 'Historial de Clientes'
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      {/* Header con diseño rectangular y lado derecho circular */}
+      <Header 
+        item={headerItem}
+        gradientColors={['#fad1d7ff', '#ffacd1ff']}
+      />
 
-      {/* Header Component */}
-      <Header title="Historial de Clientes" />
-
-      {/* Content Container */}
+      {/* Contenido principal */}
       <View style={styles.contentContainer}>
-        {/* Search Bar Component */}
         <SearchBar 
           searchText={searchText}
           onSearchChange={handleSearchChange}
-          onAddPress={handleAddPress}
           placeholder="Buscar clientes..."
         />
-
-        {/* Client List Component */}
         <ClientList clientes={filteredClientes} />
       </View>
     </SafeAreaView>
@@ -77,9 +74,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: 57,
     backgroundColor: '#FAF3F9',
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
 });
 
