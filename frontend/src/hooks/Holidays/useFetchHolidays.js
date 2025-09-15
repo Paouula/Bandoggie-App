@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-native-toast-message';
 //Importo la funcion global para realizar el fetch
 
 import { API_FETCH_JSON } from '../../config';

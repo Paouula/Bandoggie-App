@@ -1,7 +1,7 @@
 import {Schema, model} from "mongoose";
 
 const HolidaysSchema = new Schema({
-    name: {
+    nameHoliday: {
         type: String,
         require: true
     },

@@ -10,52 +10,76 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import useFetchProducts from '../../hooks/Products/useFetchProducts';
+import ProductCard from '../../components/ProductCard';
 
 const { width } = Dimensions.get('window');
 
 const FestivitiesScreen = ({ navigation, route }) => {
   const [searchText, setSearchText] = useState('');
   const [festivityProducts, setFestivityProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Hook para obtener productos
+  const { handleGetProducts } = useFetchProducts();
   
   // Recibir parámetros desde el HomeScreen (con valores por defecto)
   const festivityName = route?.params?.festivityName || 'Navidad';
   const festivityId = route?.params?.festivityId || 1;
   const festivityColor = route?.params?.festivityColor || '#FF6B6B';
 
-  // Productos de ejemplo
-  const mockProducts = [
-    {
-      id: 1,
-      name: 'Bandana navideña con lentejuelas',
-      price: 7.50,
-      image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&h=300&fit=crop',
-    },
-    {
-      id: 2,
-      name: 'Collar navideño con cascabeles',
-      price: 12.00,
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=300&h=300&fit=crop',
-    },
-    {
-      id: 3,
-      name: 'Suéter navideño de renos',
-      price: 18.50,
-      image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=300&h=300&fit=crop',
-    },
-  ];
+  useEffect(() => {
+    loadFestivityProducts();
+  }, [festivityId]);
 
   useEffect(() => {
-    // Cargar productos cuando el componente se monta
-    setFestivityProducts(mockProducts);
-  }, []);
+    // Filtrar productos basado en el texto de búsqueda
+    if (searchText.trim() === '') {
+      setFilteredProducts(festivityProducts);
+    } else {
+      const filtered = festivityProducts.filter(product =>
+        product.nameProduct?.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchText, festivityProducts]);
+
+  const loadFestivityProducts = async () => {
+    try {
+      setLoading(true);
+      const allProducts = await handleGetProducts();
+      
+      if (allProducts && Array.isArray(allProducts)) {
+        // Filtrar productos por festividad
+        const filteredByFestivity = allProducts.filter(product => {
+          // Comparar por ID de festividad
+          const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
+          return productHolidayId === festivityId;
+        });
+        
+        setFestivityProducts(filteredByFestivity);
+        setFilteredProducts(filteredByFestivity);
+      } else {
+        console.warn('No se recibieron productos válidos:', allProducts);
+        setFestivityProducts([]);
+        setFilteredProducts([]);
+      }
+    } catch (error) {
+      console.error('Error al cargar productos de festividad:', error);
+      setFestivityProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProductPress = (product) => {
-    console.log('Producto seleccionado:', product.name);
-    // Aquí puedes navegar a la pantalla de detalles
-    // navigation.navigate('ProductDetail', { productId: product.id });
+    console.log('Producto seleccionado:', product.nameProduct);
   };
 
   const handleSearch = (text) => {
@@ -68,6 +92,54 @@ const FestivitiesScreen = ({ navigation, route }) => {
     } else {
       navigation.navigate('Home');
     }
+  };
+
+  const renderProductsContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={festivityColor} />
+          <Text style={styles.loadingText}>Cargando productos...</Text>
+        </View>
+      );
+    }
+
+    if (filteredProducts.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="basket-outline" size={60} color="#ccc" />
+          <Text style={styles.emptyTitle}>
+            {searchText ? 'Sin resultados' : 'Sin productos'}
+          </Text>
+          <Text style={styles.emptyDescription}>
+            {searchText 
+              ? `No encontramos productos que coincidan con "${searchText}"`
+              : `Aún no hay productos disponibles para ${festivityName}`
+            }
+          </Text>
+          {searchText && (
+            <TouchableOpacity 
+              style={styles.clearSearchButton}
+              onPress={() => setSearchText('')}
+            >
+              <Text style={styles.clearSearchText}>Limpiar búsqueda</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.productsGrid}>
+        {filteredProducts.map((product) => (
+          <ProductCard
+            key={product._id}
+            product={product}
+            onPress={handleProductPress}
+          />
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -91,6 +163,11 @@ const FestivitiesScreen = ({ navigation, route }) => {
             onChangeText={handleSearch}
             placeholderTextColor="#666"
           />
+          {searchText ? (
+            <TouchableOpacity onPress={() => setSearchText('')}>
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
       
@@ -105,7 +182,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
             <View style={styles.bannerTextContainer}>
               <Text style={styles.bannerTitle}>{festivityName}</Text>
               <Text style={styles.bannerDescription}>
-                Lindas y hermosas prendas para que tu mascota esté muy navideña
+                Lindas y hermosas prendas para que tu mascota esté perfecta en {festivityName.toLowerCase()}
               </Text>
             </View>
             <View style={styles.bannerImageContainer}>
@@ -128,36 +205,20 @@ const FestivitiesScreen = ({ navigation, route }) => {
         {/* Lista de productos */}
         <View style={styles.productsContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Productos de {festivityName}</Text>
-            <TouchableOpacity onPress={() => console.log('Ver todos')}>
-              <Text style={styles.seeAllText}>Ver todos</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>
+              Productos de {festivityName}
+              {!loading && filteredProducts.length > 0 && (
+                <Text style={styles.productCount}> ({filteredProducts.length})</Text>
+              )}
+            </Text>
+            {!loading && filteredProducts.length > 0 && (
+              <TouchableOpacity onPress={() => console.log('Ver todos')}>
+                <Text style={styles.seeAllText}>Ver todos</Text>
+              </TouchableOpacity>
+            )}
           </View>
           
-          <View style={styles.productsGrid}>
-            {festivityProducts.map((product) => (
-              <TouchableOpacity
-                key={product.id}
-                style={styles.productCard}
-                onPress={() => handleProductPress(product)}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: product.image }}
-                  style={styles.productImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={2}>
-                    {product.name}
-                  </Text>
-                  <Text style={styles.productPrice}>
-                    Desde ${product.price.toFixed(2)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {renderProductsContent()}
         </View>
         
         {/* Espaciado para la navegación inferior */}
@@ -308,6 +369,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  productCount: {
+    fontSize: 16,
+    fontWeight: 'normal',
+    color: '#666',
+  },
   seeAllText: {
     fontSize: 14,
     color: '#FFA500',
@@ -347,6 +413,50 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FF6B6B',
+  },
+  
+  // Loading and empty states
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  emptyDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  clearSearchButton: {
+    backgroundColor: '#FFA500',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  clearSearchText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   
   // Bottom navigation styles
