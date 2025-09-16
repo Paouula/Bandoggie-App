@@ -9,6 +9,7 @@ import {
   Image,
   SafeAreaView,
   StatusBar,
+  ScrollView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,7 +62,6 @@ const EmpleadosScreen = () => {
       
       <View style={styles.detallesEmpleado}>
         <View style={styles.detalleRow}>
-          
           <Text style={styles.detalleLabel}>Nombre:</Text>
           <Text style={styles.detalleValue}>{item.nombre}</Text>
         </View>
@@ -85,60 +85,61 @@ const EmpleadosScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Title Section with Gradient Background */}
-      <View style={styles.titleSection}>
-        <LinearGradient
-          colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
-          style={styles.titleGradientBackground}
-        >
-          <Text style={styles.title}>Empleados</Text>
-          
-          {/* Logo/Icon */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoBackground}>
-              <Image 
-                source={require('../../../../assets/Employee/EmployeeHeader.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
+      {/* Scrollable container for everything */}
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Title Section with Gradient Background */}
+        <View style={styles.titleSection}>
+          <LinearGradient
+            colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
+            style={styles.titleGradientBackground}
+          >
+            <Text style={styles.title}>Empleados</Text>
+            
+            {/* Logo/Icon */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoBackground}>
+                <Image 
+                  source={require('../../../../assets/Employee/EmployeeHeader.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
-          </View>
-        </LinearGradient>
-      </View>
-
-
+          </LinearGradient>
+        </View>
 
         {/* Search and Add Section */}
         <View style={styles.contentContainer}>
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar..."
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor="#999"
-            />
-            <TouchableOpacity style={styles.searchButton}>
-              <Ionicons name="search" size={20} color="#666" />
+          <View style={styles.searchSection}>
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar..."
+                value={searchText}
+                onChangeText={setSearchText}
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity style={styles.searchButton}>
+                <Ionicons name="search" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity style={styles.addButton}>
+              <Ionicons name="add" size={18} color="white" />
+              <Text style={styles.addButtonText}>Agregar</Text>
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add" size={18} color="white" />
-            <Text style={styles.addButtonText}>Agregar</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* Empleados List */}
-        <FlatList
-          data={filteredEmpleados}
-          renderItem={renderEmpleado}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      </View>
+          {/* Empleados List */}
+          <FlatList
+            data={filteredEmpleados}
+            renderItem={renderEmpleado}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -146,13 +147,6 @@ const EmpleadosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: -10,
-    paddingVertical: 15,
     backgroundColor: '#fff',
   },
   titleSection: {
@@ -179,7 +173,7 @@ const styles = StyleSheet.create({
   logoBackground: {
     width: 160,
     height: 160,
-    marginTop: 30,
+    marginTop: 20,
     marginBottom: -100,
     borderRadius: 80,
     backgroundColor: '#FDF7DF',
@@ -226,6 +220,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    marginLeft: 20,
   },
   searchInput: {
     flex: 1,
@@ -243,11 +238,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 15,
     gap: 8,
+    marginRight: 10,
   },
   addButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
+    fontFamily: 'InriaSans-Bold',
   },
   listContainer: {
     paddingBottom: 20,

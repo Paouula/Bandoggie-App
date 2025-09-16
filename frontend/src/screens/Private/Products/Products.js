@@ -86,9 +86,11 @@ const ProductosScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header con gradiente */}
-<View style={styles.titleSection}>
+<SafeAreaView style={styles.container}>
+  {/* Scrollable container for everything */}
+  <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+    {/* Header con gradiente */}
+    <View style={styles.titleSection}>
       <LinearGradient
         colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
         style={styles.titleGradientBackground}
@@ -108,66 +110,67 @@ const ProductosScreen = () => {
       </LinearGradient>
     </View>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Barra de búsqueda */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar..."
-              placeholderTextColor="#666"
-              value={searchText}
-              onChangeText={setSearchText}
-            />
-            <Search size={20} color="#666" style={styles.searchIcon} />
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.addButton} 
-            onPress={handleAgregarProducto}
-            activeOpacity={0.8}
-          >
-            <Plus size={16} color="white" />
-            <Text style={styles.addButtonText}>Agregar</Text>
-          </TouchableOpacity>
-        </View>
+    {/* Barra de búsqueda */}
+    <View style={styles.searchContainer}>
+      <View style={styles.searchInputContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar..."
+          placeholderTextColor="#666"
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        <Search size={20} color="#666" style={styles.searchIcon} />
+      </View>
 
-        {/* Botones de categoría y festividad */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={styles.categoryButton} 
-            onPress={handleNuevaCategoria}
-            activeOpacity={0.8}
-          >
-            <Plus size={16} color="white" />
-            <Text style={styles.categoryButtonText}>Nueva Categoría</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.festividadButton} 
-            onPress={handleNuevaFestividad}
-            activeOpacity={0.8}
-          >
-            <Plus size={16} color="white" />
-            <Text style={styles.festividadButtonText}>Nueva Festividad</Text>
-          </TouchableOpacity>
-        </View>
+      <TouchableOpacity 
+        style={styles.addButton} 
+        onPress={handleAgregarProducto}
+        activeOpacity={0.8}
+      >
+        <Plus size={16} color="white" />
+        <Text style={styles.addButtonText}>Agregar</Text>
+      </TouchableOpacity>
+    </View>
 
-        {/* Lista de productos */}
-        <View style={styles.productsContainer}>
-          <FlatList
-            data={filteredProducts}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.flatListContent}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    {/* Botones de categoría y festividad */}
+    <View style={styles.actionButtons}>
+      <TouchableOpacity 
+        style={styles.categoryButton} 
+        onPress={handleNuevaCategoria}
+        activeOpacity={0.8}
+      >
+        <Plus size={16} color="white" />
+        <Text style={styles.categoryButtonText}>Nueva Categoría</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.festividadButton} 
+        onPress={handleNuevaFestividad}
+        activeOpacity={0.8}
+      >
+        <Plus size={16} color="white" />
+        <Text style={styles.festividadButtonText}>Nueva Festividad</Text>
+      </TouchableOpacity>
+    </View>
+
+    {/* Zona de productos (rosa) desplazable */}
+    <View style={styles.productsContainer}>
+      <FlatList
+        data={filteredProducts}
+        renderItem={renderProductItem}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  </ScrollView>
+</SafeAreaView>
+
+
+
   );
 };
 
@@ -178,9 +181,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
 
-  scrollContainer: {
-    flex: 1,
-  },
+scrollContainer: {
+  flex: 1,
+  backgroundColor: '#f8f9fa',  // Fondo de la página
+},
+
 
   // Header
 headerSection: {
@@ -230,7 +235,7 @@ logoContainer: {
 logoBackground: {
   width: 160,
   height: 160,
-  marginTop: 30,
+  marginTop: 15,
   marginBottom: -100,
   borderRadius: 80,
   backgroundColor: '#FDF7DF',
@@ -286,7 +291,7 @@ logoImage: {
   },
 
   addButton: {
-    backgroundColor: '#4a90a4',
+    backgroundColor: '#365A7D',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -311,7 +316,7 @@ logoImage: {
 
   categoryButton: {
     flex: 1,
-    backgroundColor: '#ff8c42',
+    backgroundColor: '#FAA543',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -322,13 +327,14 @@ logoImage: {
 
   categoryButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'InriaSans-Bold',
+    fontWeight: '500',
   },
 
   festividadButton: {
     flex: 1,
-    backgroundColor: '#ff8c42',
+    backgroundColor: '#CB8E45',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -339,17 +345,18 @@ logoImage: {
 
   festividadButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'InriaSans-Bold',
+    fontWeight: '500',
   },
 
   // Contenedor de productos
-  productsContainer: {
-    flex: 1,
-    backgroundColor: '#ffe6f0',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-  },
+productsContainer: {
+  backgroundColor: '#ffe6f0',  // Rosa para la zona de productos
+  paddingHorizontal: 15,
+  paddingTop: 10,
+  paddingBottom: 20,  // Esto asegura un poco de espacio al final de la lista
+},
 
   row: {
     justifyContent: 'space-between',
