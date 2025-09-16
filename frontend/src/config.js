@@ -14,11 +14,11 @@ const getAPIUrl = () => {
       // Si usas dispositivo físico, cambia por: "http://TU_IP_LOCAL:4000/api/"
     } else if (Platform.OS === 'ios') {
       // Para iOS simulator: localhost funciona correctamente
-      return "http://localhost:4000/api/";
+      return "https://bandoggie.onrender.com/api/";
     }
   } else {
     // En entorno de producción
-    return "https://tu-servidor-produccion.com/api/";
+    return "https://bandoggie.onrender.com/api/";
   }
 };
 
