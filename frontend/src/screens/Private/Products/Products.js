@@ -11,6 +11,7 @@ import {
   Alert,
   ScrollView
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Search, Plus } from 'lucide-react-native';
 
 const ProductosScreen = () => {
@@ -87,16 +88,25 @@ const ProductosScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header con gradiente */}
-      <View style={styles.header}>
+<View style={styles.titleSection}>
+      <LinearGradient
+        colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
+        style={styles.titleGradientBackground}
+      >
         <Text style={styles.title}>Productos</Text>
-        
+
         {/* Círculo amarillo para imagen personalizada */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <View style={styles.logoPlaceholder} />
+          <View style={styles.logoBackground}>
+            <Image
+              source={require('../../../../assets/Products/ProductsHeader.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
         </View>
-      </View>
+      </LinearGradient>
+    </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Barra de búsqueda */}
@@ -173,60 +183,70 @@ const styles = StyleSheet.create({
   },
 
   // Header
-  header: {
-    backgroundColor: '#e8d5ff',
-    paddingTop: 20,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
+headerSection: {
+  marginBottom: 20,
+},
 
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
+headerGradient: {
+  paddingTop: 20,
+  paddingBottom: 30,
+  paddingHorizontal: 20,
+  borderBottomLeftRadius: 30,
+  borderBottomRightRadius: 30,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 10,
+  elevation: 5,
+  alignItems: 'center',
+},
 
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-  },
 
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#fff3cd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+titleSection: {
+  paddingHorizontal: -30,
+  marginBottom: 20,
+},
 
-  logoPlaceholder: {
-    width: 40,
-    height: 30,
-    backgroundColor: '#ff6b9d',
-    borderRadius: 8,
-    opacity: 0.7,
-  },
+titleGradientBackground: {
+  alignItems: 'center',
+  paddingVertical: 30,
+  paddingHorizontal: 20,
+  borderBottomRightRadius: 50,
+  borderBottomLeftRadius: 50,
+  marginHorizontal: 10,
+},
+
+title: {
+  fontSize: 35,
+  fontFamily: 'BalooBhaijaan2_700Bold', // igual que empleados
+  color: '#000',
+  marginBottom: 30,
+},
+
+logoContainer: {
+  marginBottom: 20,
+},
+
+logoBackground: {
+  width: 160,
+  height: 160,
+  marginTop: 30,
+  marginBottom: -100,
+  borderRadius: 80,
+  backgroundColor: '#FDF7DF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+logoImage: {
+  width: 100,
+  height: 100,
+},
 
   // Barra de búsqueda
   searchContainer: {
@@ -234,6 +254,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     gap: 10,
+    marginTop:30,
   },
 
   searchInputContainer: {
