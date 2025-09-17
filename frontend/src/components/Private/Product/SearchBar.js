@@ -45,9 +45,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 25,
+    borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -69,18 +69,18 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-    backgroundColor: '#365A7D',
+    backgroundColor: '#36A360',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 25,
     gap: 6,
   },
 
   addButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
 });
