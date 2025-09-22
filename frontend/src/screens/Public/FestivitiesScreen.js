@@ -29,10 +29,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
   
   // Recibir parámetros desde el HomeScreen (con valores por defecto)
   const festivityName = route?.params?.festivityName || 'Navidad';
- HEAD
   const HolidaysId = route?.params?.HolidaysId || '689555222515953c7bbe9f8f';
-
-
   const festivityColor = route?.params?.festivityColor || '#FF6B6B';
 
   useEffect(() => {
@@ -59,7 +56,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
       console.log(allProducts, ' //n prueba de datos')
       
       console.log('Todos los productos recibidos:', allProducts);
-      console.log('ID de festividad a buscar:', festivityId);
+      console.log('ID de festividad a buscar:', HolidaysId);
       
       if (allProducts && Array.isArray(allProducts)) {
         // Debug: ver estructura de los primeros productos
@@ -70,29 +67,12 @@ const FestivitiesScreen = ({ navigation, route }) => {
         
         // Filtrar productos por festividad
         const filteredByFestivity = allProducts.filter(product => {
-<<<<<<< HEAD
           // Comparar por ID de festividad
-          const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct?._id;
-
-          return productHolidayId === HolidaysId;
-=======
-          // Obtener el ID de la festividad del producto
           const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
-          
-          console.log('Comparando:', {
-            productName: product.nameProduct,
-            productHolidayId,
-            festivityId,
-            match: String(productHolidayId) === String(festivityId)
-          });
-          
-          // Convertir ambos a string para comparar correctamente
-          return String(productHolidayId) === String(festivityId);
->>>>>>> 7734680c4d69ddfa743ffa760caad08d22e48980
+          return productHolidayId === HolidaysId;
         });
 
         console.log(filteredByFestivity, ' \\n  Valores filtrados: ')
-        
         console.log('Productos filtrados:', filteredByFestivity);
         
         setFestivityProducts(filteredByFestivity);
