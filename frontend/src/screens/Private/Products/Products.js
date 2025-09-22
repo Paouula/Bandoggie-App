@@ -3,7 +3,7 @@ import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, Alert } from 're
 import Header from '../../../components/Private/Product/ProductHeader.js';
 import SearchBar from '../../../components/Private/Product/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
-import useFetchProducts from '../../../hooks/Products/useFetchProducts.js'; // <- tu hook
+import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
 
 const ProductosScreen = () => {
   const [searchText, setSearchText] = useState('');
@@ -17,23 +17,23 @@ const ProductosScreen = () => {
   }, []);
 
   const loadProducts = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const data = await handleGetProducts();
-      setProductos(data);
+      setProductos(data || []);
     } catch (error) {
       Alert.alert('Error', 'No se pudieron cargar los productos');
+      setProductos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filtrar productos según búsqueda
   const filteredProducts = Array.isArray(productos)
-  ? productos.filter(producto =>
-      producto.nameProduct?.toLowerCase().includes(searchText.toLowerCase())
-    )
-  : [];
+    ? productos.filter(producto =>
+        producto.nameProduct?.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,7 +45,7 @@ const ProductosScreen = () => {
       ) : (
         <FlatList
           data={filteredProducts}
-          keyExtractor={(item) => item._id?.toString() || item.id.toString()}
+          keyExtractor={(item) => item._id?.toString() || item.id?.toString()}
           renderItem={({ item }) => <ProductCard product={item} />}
           contentContainerStyle={styles.listContent}
         />

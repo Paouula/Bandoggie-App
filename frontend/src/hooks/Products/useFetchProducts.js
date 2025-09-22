@@ -1,5 +1,39 @@
 import Toast from 'react-native-toast-message';
-import { API_FETCH_JSON, API_URL } from '../../config'; // Ajusta el path si es diferente
+import { API_URL } from '../../config'; // Solo importamos la URL, no API_FETCH_JSON
+
+// Función de fetch directo que funciona
+const directFetch = async (endpoint, options = {}) => {
+    const fullUrl = `${API_URL}${endpoint}`;
+    console.log(`🔗 [DIRECT] ${options.method || 'GET'} ${fullUrl}`);
+    
+    try {
+        const response = await fetch(fullUrl, {
+            method: options.method || 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            body: options.body && options.method !== 'GET' ? JSON.stringify(options.body) : undefined,
+        });
+        
+        console.log(`✅ [DIRECT] Response: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [DIRECT] Error response: ${errorText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`📦 [DIRECT] Data received:`, Array.isArray(data) ? `Array[${data.length}]` : typeof data);
+        return data;
+        
+    } catch (error) {
+        console.error(`💥 [DIRECT] Error:`, error.message);
+        throw error;
+    }
+};
 
 // Función reutilizable para construir el FormData
 const buildFormData = (productData) => {
@@ -31,117 +65,160 @@ const buildFormData = (productData) => {
     formData.append('idHolidayProduct', idHolidayProduct);
     formData.append('idCategory', idCategory);
 
-    for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1]);
-    }
-
     return formData;
 };
 
-console.log('🔗 Llamando a:', `${API_URL}products`);
-
-
-// Constante que contendrá los métodos
 const useFetchProducts = () => {
     const endpoint = 'products';
 
-    // Obtiene todos los productos
+    // Función principal usando fetch directo
     const handleGetProducts = async () => {
-        console.log('🔗 Llamando a:', `${API_URL}products`);
+        console.log('🔗 [HOOK] Iniciando handleGetProducts con fetch directo...');
+        
         try {
-          const response = await fetch(`${API_URL}products`);
-          console.log('🌐 Status:', response.status, response.statusText);
-      
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Error en respuesta:', errorText);
-            throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
-          }
-      
-          const data = await response.json();
-          console.log('📦 Datos recibidos:', data);
-      
-          return data;
+            const data = await directFetch(endpoint);
+            console.log('✅ [HOOK] Productos obtenidos exitosamente:', data?.length || 0);
+            
+            if (Array.isArray(data) && data.length > 0) {
+                console.log('🔍 [HOOK] Primer producto:', {
+                    id: data[0]._id,
+                    name: data[0].nameProduct,
+                    keys: Object.keys(data[0])
+                });
+            }
+            
+            return data;
+            
         } catch (error) {
-          console.error('🔥 Error completo en handleGetProducts:', error);
-          throw error;
+            console.error('💥 [HOOK] Error en handleGetProducts:', error);
+            
+            // Toast de error
+            Toast.show({
+                type: 'error',
+                text1: 'Error de Conexión',
+                text2: error.message,
+                visibilityTime: 4000
+            });
+            
+            throw error;
         }
-      };
-      
-      
-      
+    };
 
-    // Crea un nuevo producto
+    // Crear producto con FormData directo
     const handlePostProducts = async (productData) => {
+        console.log('📝 [HOOK] Creando producto...');
+        
         try {
             const formData = buildFormData(productData);
-            const data = await API_FETCH_FORM(endpoint, formData, {
+            const fullUrl = `${API_URL}${endpoint}`;
+            
+            const response = await fetch(fullUrl, {
                 method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    // No poner Content-Type para FormData
+                },
+                body: formData,
             });
-
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
             Toast.show({
                 type: 'success',
                 text1: 'Éxito',
                 text2: 'Producto creado correctamente'
             });
+            
             return data;
 
         } catch (error) {
+            console.error('💥 [HOOK] Error al crear producto:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Error al crear el producto'
+                text2: error.message || 'Error al crear el producto'
             });
             throw error;
         }
     };
 
-    // Actualiza un producto ya existente
+    // Actualizar producto
     const handlePutProducts = async (id, productData) => {
+        console.log('✏️ [HOOK] Actualizando producto:', id);
+        
         try {
             const formData = buildFormData(productData);
-            const data = await API_FETCH_FORM(`${endpoint}/${id}`, formData, {
+            const fullUrl = `${API_URL}${endpoint}/${id}`;
+            
+            const response = await fetch(fullUrl, {
                 method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                body: formData,
             });
-
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
             Toast.show({
                 type: 'success',
                 text1: 'Éxito',
                 text2: 'Producto actualizado correctamente'
             });
+            
             return data;
         } catch (error) {
+            console.error('💥 [HOOK] Error al actualizar producto:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Error al actualizar el producto'
+                text2: error.message || 'Error al actualizar el producto'
             });
             throw error;
         }
     };
 
-    // Elimina un producto
+    // Eliminar producto
     const handleDeleteProducts = async (id) => {
+        console.log('🗑️ [HOOK] Eliminando producto:', id);
+        
         try {
-            await API_FETCH_JSON(`${endpoint}/${id}`, {
+            const data = await directFetch(`${endpoint}/${id}`, {
                 method: 'DELETE',
             });
+            
             Toast.show({
                 type: 'success',
                 text1: 'Éxito',
                 text2: 'Producto eliminado correctamente'
             });
+            
+            return data;
         } catch (error) {
+            console.error('💥 [HOOK] Error al eliminar producto:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Error al eliminar el producto'
+                text2: error.message || 'Error al eliminar el producto'
             });
             throw error;
         }
     };
 
-    return { handlePostProducts, handleGetProducts, handlePutProducts, handleDeleteProducts };
+    return { 
+        handleGetProducts,
+        handlePostProducts, 
+        handlePutProducts, 
+        handleDeleteProducts
+    };
 };
 
 export default useFetchProducts;
