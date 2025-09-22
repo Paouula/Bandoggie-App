@@ -10,7 +10,7 @@ const getAPIUrl = () => {
     if (Platform.OS === 'android') {
       // Para emulador Android: 10.0.2.2 mapea al localhost de la máquina host
       // Para dispositivo físico Android: usa tu IP local (ej: 192.168.1.100)
-      return "http://192.168.1.36:4000/api/";
+      return "https://bandoggie.onrender.com/api/";
       // Si usas dispositivo físico, cambia por: "http://TU_IP_LOCAL:4000/api/"
     } else if (Platform.OS === 'ios') {
       // Para iOS simulator: localhost funciona correctamente

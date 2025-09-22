@@ -29,12 +29,12 @@ const FestivitiesScreen = ({ navigation, route }) => {
   
   // Recibir parámetros desde el HomeScreen (con valores por defecto)
   const festivityName = route?.params?.festivityName || 'Navidad';
-  const festivityId = route?.params?.festivityId || 1;
+  const HolidaysId = route?.params?.HolidaysId || '689555222515953c7bbe9f8f';
   const festivityColor = route?.params?.festivityColor || '#FF6B6B';
 
   useEffect(() => {
     loadFestivityProducts();
-  }, [festivityId]);
+  }, [HolidaysId]);
 
   useEffect(() => {
     // Filtrar productos basado en el texto de búsqueda
@@ -53,14 +53,18 @@ const FestivitiesScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const allProducts = await handleGetProducts();
+      console.log(allProducts, ' //n prueba de datos')
       
       if (allProducts && Array.isArray(allProducts)) {
         // Filtrar productos por festividad
         const filteredByFestivity = allProducts.filter(product => {
           // Comparar por ID de festividad
-          const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
-          return productHolidayId === festivityId;
+          const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct?._id;
+
+          return productHolidayId === HolidaysId;
         });
+
+        console.log(filteredByFestivity, ' \\n  Valores filtrados: ')
         
         setFestivityProducts(filteredByFestivity);
         setFilteredProducts(filteredByFestivity);
