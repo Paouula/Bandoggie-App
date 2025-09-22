@@ -10,7 +10,7 @@ const getAPIUrl = () => {
     if (Platform.OS === 'android') {
       // Para emulador Android: 10.0.2.2 mapea al localhost de la máquina host
       // Para dispositivo físico Android: usa tu IP local (ej: 192.168.1.100)
-      return "http://10.0.2.2:4000/api/";
+      return "http://192.168.1.38:4000/api/";
       // Si usas dispositivo físico, cambia por: "http://TU_IP_LOCAL:4000/api/"
     } else if (Platform.OS === 'ios') {
       // Para iOS simulator: localhost funciona correctamente
