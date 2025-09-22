@@ -29,7 +29,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
   
   // Recibir parámetros desde el HomeScreen (con valores por defecto)
   const festivityName = route?.params?.festivityName || 'Navidad';
-  const festivityId = route?.params?.festivityId || 1;
+  const festivityId = route?.params?.festivityId || '1';
   const festivityColor = route?.params?.festivityColor || '#FF6B6B';
 
   useEffect(() => {
@@ -54,13 +54,33 @@ const FestivitiesScreen = ({ navigation, route }) => {
       setLoading(true);
       const allProducts = await handleGetProducts();
       
+      console.log('Todos los productos recibidos:', allProducts);
+      console.log('ID de festividad a buscar:', festivityId);
+      
       if (allProducts && Array.isArray(allProducts)) {
+        // Debug: ver estructura de los primeros productos
+        if (allProducts.length > 0) {
+          console.log('Estructura del primer producto:', allProducts[0]);
+          console.log('Campo idHolidayProduct:', allProducts[0].idHolidayProduct);
+        }
+        
         // Filtrar productos por festividad
         const filteredByFestivity = allProducts.filter(product => {
-          // Comparar por ID de festividad
+          // Obtener el ID de la festividad del producto
           const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
-          return productHolidayId === festivityId;
+          
+          console.log('Comparando:', {
+            productName: product.nameProduct,
+            productHolidayId,
+            festivityId,
+            match: String(productHolidayId) === String(festivityId)
+          });
+          
+          // Convertir ambos a string para comparar correctamente
+          return String(productHolidayId) === String(festivityId);
         });
+        
+        console.log('Productos filtrados:', filteredByFestivity);
         
         setFestivityProducts(filteredByFestivity);
         setFilteredProducts(filteredByFestivity);

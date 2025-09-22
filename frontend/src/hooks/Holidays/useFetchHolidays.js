@@ -12,31 +12,71 @@ const useFetchHolidays = () => {
     const handleGetHolidays = async () => {
         try {
             const data = await API_FETCH_JSON(endpoint);
+            console.log('Festividades obtenidas:', data);
             return data;
         } catch (error) {
-            toast.error('Error al obtener las festividades');
-            console.error(error);
+            console.error('Error detallado al obtener festividades:', error);
+            toast.show({
+                type: 'error',
+                text1: 'Error al obtener las festividades',
+                text2: 'Verifica tu conexión a internet'
+            });
+            return [];
         }
     };
 
     // Crear una nueva festividad
-
     const handlePostHoliday = async (holidayData) => {
         try {
+            console.log('Enviando datos de festividad:', holidayData);
+            
             const data = await API_FETCH_JSON(endpoint, {
                 method: 'POST',
-                body: holidayData,
+                body: JSON.stringify(holidayData),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
 
-            toast.success('Festividad creada exitosamente');
+            console.log('Festividad creada:', data);
+            toast.show({
+                type: 'success',
+                text1: 'Festividad creada exitosamente'
+            });
             return data;
 
         } catch (error) {
-            toast.error('Error al crear la festividad');
-            console.error(error);
+            console.error('Error detallado al crear festividad:', error);
+            toast.show({
+                type: 'error',
+                text1: 'Error al crear la festividad',
+                text2: 'Revisa los datos e intenta nuevamente'
+            });
+            return null;
         }
     };
-    return { handleGetHolidays, handlePostHoliday };
+
+    // Obtener una festividad por ID
+    const handleGetHolidayById = async (holidayId) => {
+        try {
+            const data = await API_FETCH_JSON(`${endpoint}/${holidayId}`);
+            console.log('Festividad obtenida por ID:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al obtener festividad por ID:', error);
+            toast.show({
+                type: 'error',
+                text1: 'Error al obtener la festividad'
+            });
+            return null;
+        }
+    };
+
+    return { 
+        handleGetHolidays, 
+        handlePostHoliday, 
+        handleGetHolidayById 
+    };
 };
 
 export default useFetchHolidays;
