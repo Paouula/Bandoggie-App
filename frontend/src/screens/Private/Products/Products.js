@@ -29,9 +29,11 @@ const ProductosScreen = () => {
   };
 
   // Filtrar productos según búsqueda
-  const filteredProducts = productos.filter(producto =>
-    producto.nameProduct?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredProducts = Array.isArray(productos)
+  ? productos.filter(producto =>
+      producto.nameProduct?.toLowerCase().includes(searchText.toLowerCase())
+    )
+  : [];
 
   return (
     <SafeAreaView style={styles.container}>

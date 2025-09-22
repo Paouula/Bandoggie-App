@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-import { API_FETCH_FORM, API_FETCH_JSON } from '../../config';
+import { API_FETCH_JSON, API_URL } from '../../config'; // Ajusta el path si es diferente
 
 // Función reutilizable para construir el FormData
 const buildFormData = (productData) => {
@@ -38,24 +38,38 @@ const buildFormData = (productData) => {
     return formData;
 };
 
+console.log('🔗 Llamando a:', `${API_URL}products`);
+
+
 // Constante que contendrá los métodos
 const useFetchProducts = () => {
     const endpoint = 'products';
 
     // Obtiene todos los productos
     const handleGetProducts = async () => {
+        console.log('🔗 Llamando a:', `${API_URL}products`);
         try {
-            const data = await API_FETCH_JSON(endpoint);
-            return data;
+          const response = await fetch(`${API_URL}products`);
+          console.log('🌐 Status:', response.status, response.statusText);
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Error en respuesta:', errorText);
+            throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+          }
+      
+          const data = await response.json();
+          console.log('📦 Datos recibidos:', data);
+      
+          return data;
         } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: 'Error al obtener los productos'
-            });
-            throw error;
+          console.error('🔥 Error completo en handleGetProducts:', error);
+          throw error;
         }
-    };
+      };
+      
+      
+      
 
     // Crea un nuevo producto
     const handlePostProducts = async (productData) => {
