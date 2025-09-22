@@ -4,6 +4,7 @@ import MyTabs from './TabNavigation';
 import BandanasScreen from '../screens/Public/BandanasScreen';
 import CollarsScreen from '../screens/Public/CollarsScreen';
 import AccesoriesScreen from '../screens/Public/AccesoriesScreen';
+import FestivitiesScreen from '../screens/Public/FestivitiesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -14,7 +15,7 @@ export default function MainLayout() {
       <Stack.Screen name="Bandanas" component={BandanasScreen} />
       <Stack.Screen name="Collares" component={CollarsScreen} />
       <Stack.Screen name="Accesorios" component={AccesoriesScreen} />
-      
+      <Stack.Screen name="FestivitiesScreen" component={FestivitiesScreen} />
     </Stack.Navigator>
   );
 }

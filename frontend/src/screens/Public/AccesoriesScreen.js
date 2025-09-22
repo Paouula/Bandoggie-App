@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,17 @@ import {
   Dimensions,
   SafeAreaView,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+ import useFetchProductsByCategory from '../../hooks/Products/useFetchByCategory';
 
 const { width } = Dimensions.get('window');
 
-export default function CollarScreen({ navigation }) {
+// ID de la categoría para Accesorios (debes ajustar este valor según tu base de datos)
+const ACCESSORIES_CATEGORY_ID = 'ID_DE_CATEGORIA_ACCESORIOS'; // Reemplaza con el ID real
+
+export default function AccesoriesScreen({ navigation }) {
   const [currentView, setCurrentView] = useState('list');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState(0);
@@ -24,52 +29,52 @@ export default function CollarScreen({ navigation }) {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Datos de productos de ejemplo
-  const products = [
-    {
-      id: 1,
-      title: 'Collar con diseño de cangrejos',
-      price: 7.50,
-      image: require('../../../assets/Acesorios/Accessories4.png'),
+  const { handleGetProductsByCategory } = useFetchProductsByCategory();
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const productsData = await handleGetProductsByCategory(ACCESSORIES_CATEGORY_ID);
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para procesar los datos del producto de la API
+  const processProductData = (product) => {
+    return {
+      id: product._id,
+      title: product.nameProduct,
+      price: product.price,
+      image: { uri: product.image },
       rating: 5.0,
       reviews: 15,
-      description: 'Collar con temática marina con un adorable patrón de cangrejos, diseñada para hacer lucir a tus queridos peludos.',
+      description: product.description,
       colors: [
-        { name: 'Beige', color: '#F5E6D3' },
-        { name: 'Naranja', color: '#FF7043' }
+        { name: 'Color 1', color: '#F5E6D3' },
+        { name: 'Color 2', color: '#FF7043' }
       ],
       sizes: ['XS', 'S', 'M', 'L'],
-      images: [
-        require('../../../assets/Acesorios/Accessories6.png'),
-        require('../../../assets/Acesorios/Accessories7.png'),
-        require('../../../assets/Acesorios/Accessories8.png'),
-      ]
-    },
-    {
-      id: 2,
-      title: 'Collar navideñas con texto incluido',
-      price: 8.00,
-      image: require('../../../assets/Acesorios/Accessories9.png'),
-      rating: 4.5,
-      reviews: 12,
-      description: 'Bandana navideña festiva con diseño especial para las fiestas decembrinas.',
-      colors: [
-        { name: 'Rojo', color: '#F44336' },
-        { name: 'Verde', color: '#4CAF50' }
-      ],
-      sizes: ['XS', 'S', 'M', 'L'],
-      images: [
-        require('../../../assets/Acesorios/Accessories4.png'),
-        require('../../../assets/Acesorios/Accessories10.png'),
-        require('../../../assets/Acesorios/Accessories11.png'),
-      ]
-    }
-  ];
+      images: product.designImages ? product.designImages.map(url => ({ uri: url })) : [{ uri: product.image }],
+      category: product.idCategory,
+      holiday: product.idHolidayProduct
+    };
+  };
 
   const openProductDetail = (product) => {
-    setSelectedProduct(product);
-    setSelectedImageIndex(0); // Resetear a la primera imagen
+    const processedProduct = processProductData(product);
+    setSelectedProduct(processedProduct);
+    setSelectedImageIndex(0);
     setCurrentView('detail');
   };
 
@@ -89,6 +94,7 @@ export default function CollarScreen({ navigation }) {
       setQuantity(quantity - 1);
     }
   };
+
   const addToCart = () => {
     console.log('Agregado al carrito:', {
       product: selectedProduct,
@@ -97,7 +103,6 @@ export default function CollarScreen({ navigation }) {
       quantity: quantity,
       petName: petName
     });
-    // Aquí puedes agregar la lógica para añadir al carrito
   };
 
   const buyNow = () => {
@@ -108,7 +113,6 @@ export default function CollarScreen({ navigation }) {
       quantity: quantity,
       petName: petName
     });
-    // Aquí puedes agregar la lógica para comprar directamente
   };
 
   // Vista de lista de productos
@@ -119,25 +123,42 @@ export default function CollarScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Productos</Text>
+          <Text style={styles.headerTitle}>Accesorios</Text>
           <TouchableOpacity>
             <Ionicons name="search" size={24} color="#333" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-          {products.map((product) => (
-            <TouchableOpacity
-              key={product.id}
-              style={styles.productCard}
-              onPress={() => openProductDetail(product)}
-            >
-              <Image source={product.image} style={styles.productImage} resizeMode="cover" />
-              <Text style={styles.productTitle}>{product.title}</Text>
-              <Text style={styles.productPrice}>Desde ${product.price.toFixed(2)}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF9F43" />
+            <Text style={styles.loadingText}>Cargando productos...</Text>
+          </View>
+        ) : (
+          <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+            {products.length > 0 ? (
+              products.map((product) => (
+                <TouchableOpacity
+                  key={product._id}
+                  style={styles.productCard}
+                  onPress={() => openProductDetail(product)}
+                >
+                  <Image 
+                    source={{ uri: product.image }} 
+                    style={styles.productImage} 
+                    resizeMode="cover" 
+                  />
+                  <Text style={styles.productTitle}>{product.nameProduct}</Text>
+                  <Text style={styles.productPrice}>Desde ${product.price.toFixed(2)}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No hay productos disponibles en esta categoría</Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
       </SafeAreaView>
     );
   }
@@ -153,7 +174,7 @@ export default function CollarScreen({ navigation }) {
         <View style={{ width: 24 }} />
       </View>
 
-       <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
         {/* Imagen principal del producto */}
         <View style={styles.mainImageContainer}>
           <Image 
@@ -163,7 +184,7 @@ export default function CollarScreen({ navigation }) {
           />
         </View>
 
-         {/* Imágenes pequeñas */}
+        {/* Imágenes pequeñas */}
         <View style={styles.thumbnailContainer}>
           {selectedProduct.images.map((image, index) => (
             <TouchableOpacity
@@ -293,8 +314,7 @@ export default function CollarScreen({ navigation }) {
         </View>
       </ScrollView>
 
-
-       {/* Botones de acción con cantidad integrada */}
+      {/* Botones de acción con cantidad integrada */}
       <View style={styles.actionButtons}>
         <View style={styles.bottomQuantityContainer}>
           <TouchableOpacity 
@@ -345,6 +365,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  
+  // Estilos para loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  
+  // Estilos para estado vacío
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   
   // Estilos para la lista de productos
@@ -539,7 +584,7 @@ const styles = StyleSheet.create({
   },
   sizeGuideImage: {
     width: '100%',
-    height: 300, // Altura que puedes modificar
+    height: 300,
     borderRadius: 10,
   },
   quantityContainer: {
@@ -584,7 +629,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-   bottomQuantityContainer: {
+  bottomQuantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',

@@ -33,18 +33,18 @@ const ProductsSchema = new Schema({
                 message: 'Máximo 10 imágenes de diseño permitidas'
             }
         ],
-        require: true
+        require: false
     },
 
     idHolidayProduct: {
         type: Schema.Types.ObjectId,
-        ref: "Holiday",
-        require: true
+        ref: "Holidays",
+        require: false
     },
     idCategory: {
         type: Schema.Types.ObjectId,
-        ref: "Category",
-        require: true
+        ref: "Categorias",
+        require: false
     },
 }, {
     timestamps: true,

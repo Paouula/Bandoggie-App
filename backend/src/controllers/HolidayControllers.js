@@ -1,4 +1,4 @@
-import holidayModel from "../models/holiday.js";
+import holidayModel from "../models/Holiday.js";
 
 // Array de metodos
 const holidayController = {};
