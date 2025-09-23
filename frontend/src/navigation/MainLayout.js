@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyTabs from './TabNavigation';
-import BandanasScreen from '../screens/Public/BandanasScreen';
+import BandanasScreen from '../screens/Public/BandanasScreen.js';
 import CollarsScreen from '../screens/Public/CollarsScreen';
 import AccesoriesScreen from '../screens/Public/AccesoriesScreen';
 import FestivitiesScreen from '../screens/Public/FestivitiesScreen';
