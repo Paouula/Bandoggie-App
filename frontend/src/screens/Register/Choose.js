@@ -39,12 +39,7 @@ const ChooseAccountScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+           
           </View>
 
           <View style={styles.logoContainer}>

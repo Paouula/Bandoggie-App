@@ -126,9 +126,6 @@ const RegisterVetScreen = () => {
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate("Login")}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.logoContainer}>
