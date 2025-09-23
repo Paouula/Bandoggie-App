@@ -16,17 +16,19 @@ import { useForm, Controller } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 
 // Importar componentes personalizados
-import InputComponent from "../components/InputComponent";
-import ButtonComponent from "../components/ButtonComponent";
-import PasswordInput from "../components/PasswordInput";
-import ImageLoader from "../components/ImageLoader";
-import useFetchRegisterVet from "../hooks/Register/useFetchRegisterVet";
+import InputComponent from "../../components/Input/Input.js";
+import ButtonComponent from "../../components/Button/Button.js";
+import PasswordInput from "../../components/InputPassword/InputPassword.js";
+import ImageLoader from "../../components/ImageLoader/ImageLoader.js";
+import useFetchRegisterVet from "../../hooks/Register/useFetchRegisterVet";
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterVetScreen = () => {
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { handleRegister } = useFetchRegisterVet();
+  const { updateVerificationInfo, setPendingVerification } = useAuth();
 
   const {
     control,
@@ -86,8 +88,16 @@ const RegisterVetScreen = () => {
       );
 
       if (response) {
+        // Actualizar información de verificación en el contexto
+        await updateVerificationInfo({
+          email: data.email,
+          role: "vet"
+        });
+        setPendingVerification(true);
+        
         reset();
         setProfileImage(null);
+        
         // Navegar a verificación de código
         navigation.navigate("VerificationCode", {
           email: data.email,
@@ -112,7 +122,7 @@ const RegisterVetScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate("Login")}>
             <Ionicons name="close" size={24} color="#333" />
           </TouchableOpacity>
         </View>
@@ -123,7 +133,7 @@ const RegisterVetScreen = () => {
         >
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -289,7 +299,7 @@ const RegisterVetScreen = () => {
             )}
 
             {/* Link olvidé contraseña */}
-            <TouchableOpacity onPress={() => navigation.navigate("RequestCode")}>
+            <TouchableOpacity onPress={() => Alert.alert("Función no disponible", "Esta función estará disponible próximamente.")}>
               <Text style={styles.forgotPassword}>
                 ¿Olvidaste tu contraseña?
               </Text>
@@ -318,85 +328,96 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  scrollContainer: {
-    flexGrow: 1,
+  content: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingTop: 10,
-  },
-  backButton: {
-    padding: 10,
-  },
-  closeButton: {
-    padding: 10,
+    justifyContent: "center",
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 15,
+    marginBottom: 20,
   },
   logo: {
-    width: 100,
-    height: 60,
+    width: 120,
+    height: 80,
   },
   separator: {
     height: 1,
     backgroundColor: "#e0e0e0",
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginHorizontal: 0, // Changed from 20
+    marginBottom: 40,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 15,
+    marginBottom: 30,
     color: "#333",
   },
-  loginLink: {
-    fontSize: 14,
-    color: "#007AFF",
-    textAlign: "center",
-    marginBottom: 20,
-    textDecorationLine: "underline",
+  infoContainer: {
+    marginBottom: 40,
   },
-  profileImageContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  form: {
-    flex: 1,
-  },
-  label: {
+  infoText: {
     fontSize: 16,
-    fontWeight: "600",
+    textAlign: "center",
+    color: "#666",
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  emailText: {
+    fontWeight: "bold",
     color: "#333",
-    marginBottom: 8,
   },
-  labelSpacing: {
-    marginTop: 15,
-  },
-  errorText: {
-    color: "#FF3B30",
+  roleText: {
     fontSize: 12,
-    marginTop: 5,
-    marginBottom: 5,
+    textAlign: "center",
+    color: "#999",
   },
-  forgotPassword: {
-    fontSize: 14,
-    color: "#007AFF",
-    textAlign: "right",
-    marginTop: 15,
-    marginBottom: 20,
-    textDecorationLine: "underline",
+  codeContainer: {
+    marginBottom: 40,
   },
   submitButton: {
-    marginTop: 20,
+    marginBottom: 20,
+  },
+  resendContainer: {
+    alignItems: "center",
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  resendText: {
+    fontSize: 14,
+    color: "#007AFF",
+    textDecorationLine: "underline",
+  },
+  disabledResend: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: "#999",
+    textDecorationLine: "none",
+  },
+  cancelContainer: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  cancelText: {
+    fontSize: 14,
+    color: "#FF3B30",
+    textDecorationLine: "underline",
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: "#FF3B30",
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  errorSubMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 30,
   },
 });
+
 
 export default RegisterVetScreen;

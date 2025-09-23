@@ -1,61 +1,64 @@
-import { toast } from 'react-hot-toast';
-// Importa la función API_FETCH_FORM desde el archivo config
-/*API_FETCH_FORM y API_FETCH_JSON son funciones que manejan las solicitudes HTTP de manera global del proyecto
-En su interior, configura la URL base y los encabezados necesarios para las solicitudes en formato FormData y Json.*/
+import Toast from 'react-native-toast-message';
 import { API_FETCH_FORM, API_FETCH_JSON } from '../../config';
 
-//Hook para registro de usuarios
 const useFetchRegister = () => {
-    //Declaro el endpoint
+  const endpoint = 'register';
 
-    const endpoint = 'register';
+  const handleRegister = async (name, email, phone, birthday, password, image) => {
+    try {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('birthday', birthday);
+      formData.append('password', password);
+      if (image) {
+        formData.append('image', image);
+      }
 
-    // Función para registrar usuarios
-    const handleRegister = async (name, email, phone, birthday, password, image) => {
-        try {
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('email', email);
-            formData.append('phone', phone);
-            formData.append('birthday', birthday);
-            formData.append('password', password);
-            if (image) {
-                formData.append('image', image);
-            }
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ':', pair[1]);
-            }
-            const data = await API_FETCH_FORM(endpoint, formData, {
-                method: 'POST',
-            });
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1]);
+      }
 
-            toast.success('Se ha registrado correctamente. Por favor, verifica tu correo electrónico.');
-            return data;
+      const data = await API_FETCH_FORM(endpoint, formData, {
+        method: 'POST',
+      });
 
-        } catch (error) {
-            toast.error(error.message || 'Error during registration');
-            throw error;
-        }
+      Toast.show({
+        type: 'success',
+        text1: 'Registro exitoso',
+        text2: 'Verifica tu correo electrónico',
+      });
+
+      return data;
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error al registrar',
+        text2: error.message || 'Intenta nuevamente',
+      });
+      throw error;
     }
+  };
 
-    //Función para verificar el correo electrónico
-    // Esta función se usa para verificar el correo electrónico después del registro
-    const verifyEmail = async (verificationCode) => {
-        try {
-            const data = await API_FETCH_JSON(`${endpoint}/verifyCodeEmail`, {
-                method: 'POST',
-                body: { verificationCode },
-            });
+  const verifyEmail = async (verificationCode) => {
+    try {
+      const data = await API_FETCH_JSON(`${endpoint}/verifyCodeEmail`, {
+        method: 'POST',
+        body: { verificationCode },
+      });
 
-            return data;
-
-        } catch (error) {
-            toast.error(error.message || 'Error during email verification');
-        }
+      return data;
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error al verificar correo',
+        text2: error.message || 'Código inválido o expirado',
+      });
     }
+  };
 
-    // Retorna las funciones para ser usadas en los componentes
-    return { handleRegister, verifyEmail };
-}
+  return { handleRegister, verifyEmail };
+};
 
 export default useFetchRegister;

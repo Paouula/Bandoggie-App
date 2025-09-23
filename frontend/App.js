@@ -1,28 +1,68 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import 'react-native-gesture-handler';
 import { View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
 import { NavigationContainer } from '@react-navigation/native';
-import { useFonts, BalooBhaijaan2_400Regular, BalooBhaijaan2_700Bold } from '@expo-google-fonts/baloo-bhaijaan-2';
+import { useFonts as useBalooFonts, BalooBhaijaan2_400Regular, BalooBhaijaan2_700Bold } from '@expo-google-fonts/baloo-bhaijaan-2';
 
 import DrawerNavigation from './src/navigation/DrawerNavigation';
 import BandoggieSplashScreen from './src/components/SplashScreen';
 
+import LoginScreen from './src/screens/Login/Login';
+import ChooseScreen from './src/screens/Register/Choose';
+import RegisterScreen from './src/screens/Register/Register';
+import RegisterVetScreen from './src/screens/Register/RegisterVet';
+import VerificationCodeScreen from './src/screens/Register/VerificationCode';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+
 // Evita que se oculte automáticamente el Splash de Expo
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+const AuthStack = createNativeStackNavigator();
 
-  // Cargar fuentes
-  const [fontsLoaded] = useFonts({
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Choose" component={ChooseScreen} />
+      <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="RegisterVet" component={RegisterVetScreen} />
+      <AuthStack.Screen 
+        name="VerificationCode" 
+        component={VerificationCodeScreen}
+        options={{ gestureEnabled: false, headerBackVisible: false }}
+      />
+    </AuthStack.Navigator>
+  );
+}
+
+function AppContent() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [inriaLoaded, setInriaLoaded] = useState(false);
+  const { user, loadingUser, pendingVerification, loadingVerification } = useAuth();
+
+  const [balooLoaded] = useBalooFonts({
     BalooBhaijaan2_400Regular,
     BalooBhaijaan2_700Bold,
   });
 
   useEffect(() => {
+    async function loadLocalFonts() {
+      await Font.loadAsync({
+        'InriaSans-Regular': require('./assets/fonts/InriaSans/InriaSans-Regular.ttf'),
+        'InriaSans-Bold': require('./assets/fonts/InriaSans/InriaSans-Bold.ttf'),
+      });
+      setInriaLoaded(true);
+    }
+    loadLocalFonts();
+  }, []);
+
+  useEffect(() => {
     async function prepareApp() {
-      // Simulación de carga (puedes quitar el timeout si no lo necesitas)
       await new Promise(resolve => setTimeout(resolve, 800));
     }
     prepareApp();
@@ -32,15 +72,13 @@ export default function App() {
     setTimeout(() => setShowSplash(false), 100);
   };
 
-  // Ocultar Splash de Expo cuando todo esté listo
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && !showSplash) {
+    if (balooLoaded && inriaLoaded && !showSplash) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, showSplash]);
+  }, [balooLoaded, inriaLoaded, showSplash]);
 
-  if (!fontsLoaded) {
-    // No mostramos nada hasta que las fuentes estén cargadas
+  if (!balooLoaded || !inriaLoaded || loadingUser || loadingVerification) {
     return null;
   }
 
@@ -51,8 +89,17 @@ export default function App() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
-        <DrawerNavigation />
+        {user && !pendingVerification ? <DrawerNavigation /> : <AuthNavigator />}
       </NavigationContainer>
+      <Toast />
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

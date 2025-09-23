@@ -2,14 +2,33 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 
 //Componente global para el boton y sus usos en toda la app
-const ButtonComponent = ({ type = "button", children, style = {}, onPress }) => {
+const ButtonComponent = ({
+  title,
+  children,
+  style = {},
+  textStyle = {},
+  onPress,
+  loading = false,
+  disabled = false,
+}) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.button, style]} 
-      activeOpacity={0.8} // Efecto visual al presionar
+      style={[
+        styles.button,
+        style,
+        disabled && styles.disabledButton,
+      ]}
+      activeOpacity={0.8}
+      disabled={disabled || loading}
     >
-      <Text style={styles.text}>{children}</Text>
+      {loading ? (
+        <ActivityIndicator color="#fff" />
+      ) : (
+        <Text style={[styles.text, textStyle]}>
+          {children || title}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 };

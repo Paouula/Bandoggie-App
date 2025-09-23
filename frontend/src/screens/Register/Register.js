@@ -17,18 +17,20 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
 // Importar componentes personalizados
-import InputComponent from "../components/InputComponent";
-import ButtonComponent from "../components/ButtonComponent";
-import PasswordInput from "../components/PasswordInput";
-import DatePickerInput from "../components/DatePickerInput";
-import ImageLoader from "../components/ImageLoader";
-import useFetchRegister from "../hooks/Register/useFetchRegister";
+import InputComponent from "../../components/Input/Input.js";
+import ButtonComponent from "../../components/Button/Button.js";
+import PasswordInput from "../../components/InputPassword/InputPassword.js";
+import DatePickerInput from "../../components/InputDataPicker/InputDataPicker.js";
+import ImageLoader from "../../components/ImageLoader/ImageLoader.js";
+import useFetchRegister from "../../hooks/Register/useFetchRegister";
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { handleRegister } = useFetchRegister();
+  const { updateVerificationInfo, setPendingVerification } = useAuth();
 
   const {
     control,
@@ -82,8 +84,16 @@ const RegisterScreen = () => {
       );
       
       if (response) {
+        // Actualizar información de verificación en el contexto
+        await updateVerificationInfo({
+          email: data.email,
+          role: "client"
+        });
+        setPendingVerification(true);
+        
         reset();
         setProfileImage(null);
+        
         // Navegar a verificación de código
         navigation.navigate("VerificationCode", {
           email: data.email,
@@ -122,7 +132,7 @@ const RegisterScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate("Login")}>
             <Ionicons name="close" size={24} color="#333" />
           </TouchableOpacity>
         </View>
@@ -133,7 +143,7 @@ const RegisterScreen = () => {
         >
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -311,7 +321,7 @@ const RegisterScreen = () => {
             )}
 
             {/* Link olvidé contraseña */}
-            <TouchableOpacity onPress={() => navigation.navigate("RequestCode")}>
+            <TouchableOpacity onPress={() => Alert.alert("Función no disponible", "Esta función estará disponible próximamente.")}>
               <Text style={styles.forgotPassword}>
                 ¿Olvidaste tu contraseña?
               </Text>
@@ -369,7 +379,7 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     backgroundColor: "#e0e0e0",
-    marginHorizontal: 20,
+    marginHorizontal: 0, // Changed from 20
     marginBottom: 20,
   },
   title: {
@@ -428,5 +438,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
 
 export default RegisterScreen;
