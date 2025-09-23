@@ -40,7 +40,7 @@ const ChooseAccountScreen = () => {
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
-          source={require("../assets/images/LogoBandoggie.png")}
+          source={require("../../../assets/LogoBandoggie.png")}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -94,15 +94,16 @@ const ChooseAccountScreen = () => {
   );
 };
 
+// Choose.js - Updated styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20,
   },
   header: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    paddingHorizontal: 20,
     paddingTop: 10,
   },
   closeButton: {
@@ -112,6 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   logo: {
     width: 120,
@@ -135,6 +137,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     gap: 20,
+    paddingHorizontal: 20,
   },
   card: {
     backgroundColor: "#f8f9fa",
@@ -178,6 +181,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingBottom: 30,
+    paddingHorizontal: 20,
     alignItems: "center",
   },
   loginLink: {

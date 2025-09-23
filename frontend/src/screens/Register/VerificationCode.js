@@ -8,17 +8,18 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { useForm } from "react-hook-form";
 
 // Importar componentes personalizados
-import ButtonComponent from "../components/ButtonComponent";
-import VerificationCodeInput from "../components/VerificationCodeInput";
-import useFetchRegister from "../hooks/Register/useFetchRegister";
-import useFetchResend from "../hooks/Register/useFetchResendVerifyCode";
-import { useAuth } from "../context/AuthContext";
+import ButtonComponent from "../../components/Button/Button";
+import VerificationCodeInput from "../../components/VerificationCodeInput/VerificationCodeInput";
+import useFetchRegister from "../../hooks/Register/useFetchRegister";
+import useFetchResend from "../../hooks/Register/useFetchResendVerifyCode";
+import { useAuth } from "../../context/AuthContext";
 
 const VerificationCodeScreen = () => {
   const navigation = useNavigation();
@@ -32,7 +33,7 @@ const VerificationCodeScreen = () => {
 
   const { verifyEmail } = useFetchRegister();
   const { resendVerifyEmail } = useFetchResend();
-  const { setPendingVerification, verificationInfo } = useAuth();
+  const { setPendingVerification, verificationInfo, clearVerificationInfo } = useAuth();
 
   // Usar verificationInfo del contexto si no se pasan por parámetros
   const currentEmail = email || verificationInfo?.email;
@@ -47,13 +48,50 @@ const VerificationCodeScreen = () => {
     defaultValues: { token: "" },
   });
 
+  // Prevenir que el usuario salga de esta pantalla usando el botón atrás
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert(
+          "Verificación requerida",
+          "Debes completar la verificación de tu correo electrónico antes de continuar.",
+          [
+            {
+              text: "Cancelar registro",
+              style: "destructive",
+              onPress: () => {
+                clearVerificationInfo();
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              },
+            },
+            {
+              text: "Continuar verificación",
+              style: "cancel",
+            },
+          ]
+        );
+        return true; // Previene el comportamiento por defecto
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [navigation, clearVerificationInfo])
+  );
+
   // Verificar que se hayan enviado los datos necesarios
   useEffect(() => {
     if (!currentEmail || !currentRole) {
       Alert.alert(
         "Error",
         "Faltan datos de verificación. Intenta registrarte nuevamente.",
-        [{ text: "OK", onPress: () => navigation.navigate("ChooseAccount") }]
+        [{ text: "OK", onPress: () => navigation.reset({
+          index: 0,
+          routes: [{ name: "Choose" }],
+        }) }]
       );
     }
   }, [currentEmail, currentRole, navigation]);
@@ -110,14 +148,26 @@ const VerificationCodeScreen = () => {
     try {
       const response = await verifyEmail(data.token);
       if (response) {
-        Alert.alert("Éxito", "Código verificado con éxito.");
-        reset();
-        
-        // Actualizar estado global
-        setPendingVerification(false);
-        
-        // Navegar al login
-        navigation.navigate("Login");
+        Alert.alert(
+          "Éxito", 
+          "Código verificado con éxito. ¡Bienvenido a Bandoggie!",
+          [
+            {
+              text: "Continuar",
+              onPress: () => {
+                reset();
+                clearVerificationInfo();
+                setPendingVerification(false);
+                
+                // Navegar al login
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              }
+            }
+          ]
+        );
       }
     } catch (error) {
       Alert.alert("Error", error.message || "Error al verificar el código.");
@@ -131,6 +181,30 @@ const VerificationCodeScreen = () => {
     setValue("token", code);
   };
 
+  const handleCancelRegistration = () => {
+    Alert.alert(
+      "Cancelar registro",
+      "¿Estás seguro que deseas cancelar el registro? Tendrás que volver a registrarte desde el inicio.",
+      [
+        {
+          text: "No, continuar verificación",
+          style: "cancel",
+        },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: () => {
+            clearVerificationInfo();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          },
+        },
+      ]
+    );
+  };
+
   // Si no tenemos los datos necesarios, mostrar pantalla de error
   if (!currentEmail || !currentRole) {
     return (
@@ -142,7 +216,7 @@ const VerificationCodeScreen = () => {
           <View style={styles.content}>
             <View style={styles.logoContainer}>
               <Image
-                source={require("../assets/images/LogoBandoggie.png")}
+                source={require("../../../assets/LogoBandoggie.png")}
                 style={styles.logo}
                 resizeMode="contain"
               />
@@ -162,7 +236,10 @@ const VerificationCodeScreen = () => {
 
             <ButtonComponent
               title="Cerrar"
-              onPress={() => navigation.navigate("ChooseAccount")}
+              onPress={() => navigation.reset({
+                index: 0,
+                routes: [{ name: "Choose" }],
+              })}
               style={styles.submitButton}
             />
           </View>
@@ -180,7 +257,7 @@ const VerificationCodeScreen = () => {
         <View style={styles.content}>
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -211,7 +288,7 @@ const VerificationCodeScreen = () => {
 
           {/* Botón de envío */}
           <ButtonComponent
-            title={isSubmitting ? "Enviando..." : "Verificar"}
+            title={isSubmitting ? "Verificando..." : "Verificar"}
             onPress={handleSubmit(onSubmit)}
             loading={isSubmitting}
             disabled={isSubmitting || verificationCode.length < 6}
@@ -228,6 +305,16 @@ const VerificationCodeScreen = () => {
               {isResending
                 ? `Espera ${resendCountdown} segundos para reenviar`
                 : "Reenviar código"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Botón para cancelar registro */}
+          <TouchableOpacity
+            onPress={handleCancelRegistration}
+            style={styles.cancelContainer}
+          >
+            <Text style={styles.cancelText}>
+              Cancelar registro
             </Text>
           </TouchableOpacity>
         </View>
@@ -293,11 +380,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   submitButton: {
-    marginBottom: 30,
+    marginBottom: 20,
   },
   resendContainer: {
     alignItems: "center",
     paddingVertical: 10,
+    marginBottom: 10,
   },
   resendText: {
     fontSize: 14,
@@ -310,6 +398,15 @@ const styles = StyleSheet.create({
   disabledText: {
     color: "#999",
     textDecorationLine: "none",
+  },
+  cancelContainer: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  cancelText: {
+    fontSize: 14,
+    color: "#FF3B30",
+    textDecorationLine: "underline",
   },
   errorMessage: {
     fontSize: 16,
