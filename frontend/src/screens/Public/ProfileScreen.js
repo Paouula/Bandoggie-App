@@ -17,9 +17,6 @@ const ProfileScreen = ({ navigation }) => {
               source={{ uri: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face' }}
               style={styles.profileImage}
             />
-            <View style={styles.badgeContainer}>
-              <Text style={styles.badge}>9</Text>
-            </View>
           </View>
 
           <View style={styles.formSection}>
@@ -77,9 +74,6 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Pedidos')}
           >
             <View style={styles.menuItemLeft}>
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>📦</Text>
-              </View>
               <Text style={styles.menuItemText}>Tus pedidos</Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -90,12 +84,8 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Chat')}
           >
             <View style={styles.menuItemLeft}>
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>💬</Text>
-              </View>
               <Text style={styles.menuItemText}>Mensajes</Text>
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationText}>2</Text>
               </View>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -106,9 +96,6 @@ const ProfileScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Reseñas')}
           >
             <View style={styles.menuItemLeft}>
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>⭐</Text>
-              </View>
               <Text style={styles.menuItemText}>Reseñas</Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -124,7 +111,7 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#B8D4F0',
+    backgroundColor: '#ECF2FA',
   },
   scrollView: {
     flex: 1,
@@ -200,7 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   editButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#FF9C46',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -245,20 +232,6 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontWeight: '500',
     flex: 1,
-  },
-  notificationBadge: {
-    backgroundColor: '#FF9500',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  notificationText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   menuArrow: {
     fontSize: 20,
