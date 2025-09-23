@@ -10,15 +10,15 @@ const getAPIUrl = () => {
     if (Platform.OS === 'android') {
       // Para emulador Android: 10.0.2.2 mapea al localhost de la máquina host
       // Para dispositivo físico Android: usa tu IP local (ej: 192.168.1.100)
-      return "http://10.0.2.2:4000/api/";
+      return "https://bandoggie-production.up.railway.app/api/";
       // Si usas dispositivo físico, cambia por: "http://TU_IP_LOCAL:4000/api/"
     } else if (Platform.OS === 'ios') {
       // Para iOS simulator: localhost funciona correctamente
-      return "http://localhost:4000/api/";
+      return "https://bandoggie-production.up.railway.app/api/";
     }
   } else {
     // En entorno de producción
-    return "https://tu-servidor-produccion.com/api/";
+    return "https://bandoggie-production.up.railway.app/api/";
   }
 };
 
