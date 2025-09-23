@@ -1,7 +1,7 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import MainLayout from './MainLayout';
+import MainLayout from './MainLayout.js';
 
 const Drawer = createDrawerNavigator();
 
@@ -47,6 +47,8 @@ function CustomDrawerContent({ navigation }) {
         <DrawerItem label="Collares" onPress={() => navigateTo('Collares')} />
         <DrawerItem label="Accesorios" onPress={() => navigateTo('Accesorios')} />
         <DrawerItem label="Festividades" onPress={() => navigateTo('FestivitiesScreen')} />
+        <DrawerItem label="Productos (demostración)" onPress={() => navigateTo('ProductsScreen')} />
+        <DrawerItem label="Empleados (demostración)" onPress={() => navigateTo('EmployeesScreen')} />
       </View>
     </View>
   );

@@ -4,18 +4,18 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TextInput,
-  TouchableOpacity,
-  Image,
   SafeAreaView,
   StatusBar,
+  ScrollView,
+  Image 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import SearchBar from '../../../components/Private/Product/SearchBar';  // Asegúrate de importar el SearchBar aquí
 
 const EmpleadosScreen = () => {
   const [searchText, setSearchText] = useState('');
-  
+
   // Datos de ejemplo de empleados
   const [empleados] = useState([
     {
@@ -28,18 +28,18 @@ const EmpleadosScreen = () => {
     },
     {
       id: 2,
-      nombre: 'Monica Pérez',
-      correo: 'monicaperez@gmail.com',
+      nombre: 'Juan Rodríguez',
+      correo: 'juanrodriguez@gmail.com',
       telefono: '7897-2362',
-      contratada: '12/03/2025',
+      contratada: '11/02/2024',
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b69d4dad?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 3,
-      nombre: 'Monica Pérez',
-      correo: 'monicaperez@gmail.com',
+      nombre: 'Ana Gómez',
+      correo: 'anagomez@gmail.com',
       telefono: '7897-2362',
-      contratada: '12/03/2025',
+      contratada: '10/01/2023',
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b69d4dad?w=150&h=150&fit=crop&crop=face'
     }
   ]);
@@ -83,61 +83,51 @@ const EmpleadosScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
-      {/* Title Section with Gradient Background */}
-      <View style={styles.titleSection}>
-        <LinearGradient
-          colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
-          style={styles.titleGradientBackground}
-        >
-          <Text style={styles.title}>Empleados</Text>
-          
-          {/* Logo/Icon */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoBackground}>
-              <Image 
-                source={require('../../../../assets/Employee/EmployeeHeader.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
+      
+      {/* Scrollable container for everything */}
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Title Section with Gradient Background */}
+        <View style={styles.titleSection}>
+          <LinearGradient
+            colors={['#DFEFF6', '#E8E9F9', '#F6EDFE']}
+            style={styles.titleGradientBackground}
+          >
+            <Text style={styles.title}>Empleados</Text>
+            
+            {/* Logo/Icon */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoBackground}>
+                <Image 
+                  source={require('../../../../assets/Employee/EmployeeHeader.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
-          </View>
-        </LinearGradient>
-      </View>
-
-
+          </LinearGradient>
+        </View>
 
         {/* Search and Add Section */}
         <View style={styles.contentContainer}>
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar..."
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor="#999"
+          <View style={styles.searchSection}>
+            {/* Usamos el SearchBar de ProductosScreen aquí */}
+            <SearchBar 
+              searchText={searchText} 
+              setSearchText={setSearchText}
+              handleAgregarProducto={() => console.log('Agregar Empleado')}
             />
-            <TouchableOpacity style={styles.searchButton}>
-              <Ionicons name="search" size={20} color="#666" />
-            </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add" size={18} color="white" />
-            <Text style={styles.addButtonText}>Agregar</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* Empleados List */}
-        <FlatList
-          data={filteredEmpleados}
-          renderItem={renderEmpleado}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      </View>
+          {/* Empleados List */}
+          <FlatList
+            data={filteredEmpleados}
+            renderItem={renderEmpleado}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -145,13 +135,6 @@ const EmpleadosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: -10,
-    paddingVertical: 15,
     backgroundColor: '#fff',
   },
   titleSection: {
@@ -178,7 +161,7 @@ const styles = StyleSheet.create({
   logoBackground: {
     width: 160,
     height: 160,
-    marginTop: 30,
+    marginTop: 20,
     marginBottom: -100,
     borderRadius: 80,
     backgroundColor: '#FDF7DF',
@@ -199,54 +182,11 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: 57,
+    marginTop: 50,
     backgroundColor: '#FAF3F9',
   },
   searchSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 30,
-    gap: 15,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 25,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000',
-  },
-  searchButton: {
-    padding: 5,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#36A360',
-    paddingHorizontal: 26,
-    paddingVertical: 10,
-    borderRadius: 15,
-    gap: 8,
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
+    marginTop: -30,
   },
   listContainer: {
     paddingBottom: 20,

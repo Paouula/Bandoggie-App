@@ -4,7 +4,8 @@ import { View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
-import { useFonts, BalooBhaijaan2_400Regular, BalooBhaijaan2_700Bold } from '@expo-google-fonts/baloo-bhaijaan-2';
+import { useFonts as useBalooFonts, BalooBhaijaan2_400Regular, BalooBhaijaan2_700Bold } from '@expo-google-fonts/baloo-bhaijaan-2';
+import * as Font from 'expo-font';
 
 import DrawerNavigation from './src/navigation/DrawerNavigation';
 import BandoggieSplashScreen from './src/components/SplashScreen';
@@ -46,14 +47,31 @@ function AuthNavigator() {
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const { user, loadingUser, pendingVerification, loadingVerification } = useAuth();
+  const [inriaLoaded, setInriaLoaded] = useState(false);
 
   const [fontsLoaded] = useFonts({
+  // Cargar fuentes desde Google Fonts
+  const [balooLoaded] = useBalooFonts({
     BalooBhaijaan2_400Regular,
     BalooBhaijaan2_700Bold,
   });
 
+  // Cargar fuentes locales (Inria Sans)
+  useEffect(() => {
+    async function loadLocalFonts() {
+      await Font.loadAsync({
+        'InriaSans-Regular': require('./assets/fonts/InriaSans/InriaSans-Regular.ttf'),
+        'InriaSans-Bold': require('./assets/fonts/InriaSans/InriaSans-Bold.ttf'),
+      });
+      setInriaLoaded(true);
+    }
+
+    loadLocalFonts();
+  }, []);
+
   useEffect(() => {
     async function prepareApp() {
+      // Simulación de carga extra (puedes quitar el timeout si no lo necesitas)
       await new Promise(resolve => setTimeout(resolve, 800));
     }
     prepareApp();
@@ -64,12 +82,13 @@ function AppContent() {
   };
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && !showSplash) {
+    if (balooLoaded && inriaLoaded && !showSplash) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, showSplash]);
+  }, [balooLoaded, inriaLoaded, showSplash]);
 
   if (!fontsLoaded || loadingUser || loadingVerification) {
+  if (!balooLoaded || !inriaLoaded) {
     return null;
   }
 
