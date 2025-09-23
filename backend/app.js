@@ -65,7 +65,7 @@ app.use('/api/guestClients', guestClients)
 
 //Graficas
 app.use('/api/Holiday', HolidayRoutes)
-app.use('/api/products', ProductsRoutes)
+//app.use('/api/products', ProductsRoutes)
 app.use('/api/reviews', ReviewsRoutes)
 app.use('/api/cart', CartRoutes);
 app.use('/api/Categories', CategoriasRoutes)
