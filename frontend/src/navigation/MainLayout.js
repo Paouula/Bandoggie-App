@@ -12,6 +12,7 @@ import ChooseScreen from '../screens/Register/Choose';
 import RegisterScreen from '../screens/Register/Register';
 import RegisterVetScreen from '../screens/Register/RegisterVet';
 import VerificationCodeScreen from '../screens/Register/VerificationCode.js';
+import ClientsScreen from '../screens/Private/Clients/Clients.js';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ export default function MainLayout() {
       <Stack.Screen name="FestivitiesScreen" component={FestivitiesScreen} />
       <Stack.Screen name="ProductsScreen" component={ProductsScreen} />
       <Stack.Screen name="EmployeesScreen" component={EmployeesScreen} />
+      <Stack.Screen name="ClientsScreen" component={ClientsScreen} />
     </Stack.Navigator>
   );
 }

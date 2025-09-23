@@ -49,6 +49,7 @@ function CustomDrawerContent({ navigation }) {
         <DrawerItem label="Festividades" onPress={() => navigateTo('FestivitiesScreen')} />
         <DrawerItem label="Productos (demostración)" onPress={() => navigateTo('ProductsScreen')} />
         <DrawerItem label="Empleados (demostración)" onPress={() => navigateTo('EmployeesScreen')} />
+        <DrawerItem label="Clientes (demostración)" onPress={() => navigateTo('ClientsScreen')} />
       </View>
     </View>
   );
