@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
 import Header from '../../../components/Private/Product/ProductHeader.js';
 import SearchBar from '../../../components/Private/Product/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
@@ -37,9 +37,6 @@ const ProductosScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-      <SearchBar searchText={searchText} setSearchText={setSearchText} />
-
       {loading ? (
         <ActivityIndicator size="large" color="#4a90a4" style={{ marginTop: 20 }} />
       ) : (
@@ -47,7 +44,17 @@ const ProductosScreen = () => {
           data={filteredProducts}
           keyExtractor={(item) => item._id?.toString() || item.id?.toString()}
           renderItem={({ item }) => <ProductCard product={item} />}
+          numColumns={2}
+          columnWrapperStyle={filteredProducts.length > 0 ? styles.row : null}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={() => (
+            <View style={styles.headerContainer}>
+              <Header />
+              <SearchBar searchText={searchText} setSearchText={setSearchText} />
+              <View style={styles.productsStartBackground} />
+            </View>
+          )}
         />
       )}
     </SafeAreaView>
@@ -57,10 +64,23 @@ const ProductosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f8f9fa', // Fondo blanco/neutral para toda la pantalla
+  },
+  headerContainer: {
+    backgroundColor: '#f8f9fa', // Fondo blanco para header y search
+  },
+  productsStartBackground: {
+    height: 10,
+    backgroundColor: '#ffe6f0', // Aquí empieza el fondo rosa
   },
   listContent: {
-    padding: 16,
+    backgroundColor: '#ffe6f0', // Fondo rosa para el área de productos
+    paddingHorizontal: 10,
+    paddingTop: 0,
+    paddingBottom: 20,
+  },
+  row: {
+    justifyContent: 'space-between',
   },
 });
 

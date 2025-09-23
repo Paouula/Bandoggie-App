@@ -1,8 +1,10 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyTabs from './TabNavigation';
-import BandanasScreen from '../screens/Private/Products/Products.js';
-import CollarsScreen from '../screens/Private/Employees/Employee.js';
+import BandanasScreen from '../screens/Public/BandanasScreen.js';
+import CollarsScreen from '../screens/Public/CollarsScreen';
+import ProductsScreen from '../screens/Private/Products/Products.js';
+import EmployeesScreen from '../screens/Private/Employees/Employee.js';
 import AccesoriesScreen from '../screens/Public/AccesoriesScreen';
 import FestivitiesScreen from '../screens/Public/FestivitiesScreen';
 
@@ -16,6 +18,8 @@ export default function MainLayout() {
       <Stack.Screen name="Collares" component={CollarsScreen} />
       <Stack.Screen name="Accesorios" component={AccesoriesScreen} />
       <Stack.Screen name="FestivitiesScreen" component={FestivitiesScreen} />
+      <Stack.Screen name="ProductsScreen" component={ProductsScreen} />
+      <Stack.Screen name="EmployeesScreen" component={EmployeesScreen} />
     </Stack.Navigator>
   );
 }
