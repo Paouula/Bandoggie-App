@@ -1,83 +1,96 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, SafeAreaView } from 'react-native';
 import Header from '../../../components/Private/Clients/Header';
 import SearchBar from '../../../components/Private/Clients/SearchBar';
 import ClientList from '../../../components/Private/Clients/ClientList';
+import useFetchUsers from '../../../hooks/Clients/useFetchUsers';
 
 const ClientsScreen = () => {
   const [searchText, setSearchText] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  
+  const { 
+    clients,
+    vets,
+    loading, 
+    error, 
+    handleGetClientes,
+    handleGetVets
+  } = useFetchUsers();
 
-  // Datos de ejemplo de clientes
-  const [clientes] = useState([
-    {
-      id: 1,
-      nombre: 'María González',
-      correo: 'maria.gonzalez@email.com',
-      telefono: '7845-1234',
-      registrado: '15/01/2025',
-      direccion: 'Col. Centro, San Salvador',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 4,
-      nombre: 'Roberto Herrera',
-      correo: 'roberto.herrera@yahoo.com',
-      telefono: '7456-7890',
-      registrado: '05/02/2025',
-      direccion: 'Col. Miramonte, San Salvador',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+  const allUsers = useMemo(() => [
+    ...clients.map(client => ({ ...client, userType: 'client' })),
+    ...vets.map(vet => ({ ...vet, userType: 'vet' }))
+  ], [clients, vets]);
+
+  const getUsersByType = (userType) => {
+    switch (userType) {
+      case 'client': return clients.map(client => ({ ...client, userType: 'client' }));
+      case 'vet': return vets.map(vet => ({ ...vet, userType: 'vet' }));
+      case 'all':
+      default: return allUsers;
     }
-  ]);
+  };
 
-  // Filtrar clientes
-  const filteredClientes = clientes.filter(cliente =>
-    cliente.nombre.toLowerCase().includes(searchText.toLowerCase()) ||
-    cliente.correo.toLowerCase().includes(searchText.toLowerCase()) ||
-    cliente.telefono.includes(searchText)
-  );
+  const filteredUsers = useMemo(() => {
+    const users = getUsersByType(activeFilter);
+    
+    if (!searchText.trim()) {
+      return users;
+    }
+    
+    return users.filter(user =>
+      user.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.nombre?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.correo?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.phone?.includes(searchText) ||
+      user.telefono?.includes(searchText)
+    );
+  }, [searchText, activeFilter, allUsers, clients, vets]);
 
-  // Handler de búsqueda
   const handleSearchChange = (text) => {
     setSearchText(text);
   };
 
-  // Configuración del header
+  const handleRefresh = () => {
+    handleGetClientes();
+    handleGetVets();
+  };
+
   const headerItem = {
-    nombre: 'Historial de Clientes'
+    nombre: 'Historial de Usuarios'
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header con diseño rectangular y lado derecho circular */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <Header 
         item={headerItem}
         gradientColors={['#fad1d7ff', '#ffacd1ff']}
       />
 
-      {/* Contenido principal */}
-      <View style={styles.contentContainer}>
+      <View style={{ flex: 1, backgroundColor: '#FAF3F9', paddingHorizontal: 20, paddingTop: 20 }}>
         <SearchBar 
           searchText={searchText}
           onSearchChange={handleSearchChange}
-          placeholder="Buscar clientes..."
+          placeholder="Buscar usuarios..."
         />
-        <ClientList clientes={filteredClientes} />
+        <ClientList 
+          clientes={filteredUsers}
+          loading={loading}
+          error={error}
+          onRefresh={handleRefresh}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          filterOptions={[
+            { key: 'all', label: 'Todos', count: allUsers.length },
+            { key: 'client', label: 'Clientes', count: clients.length },
+            { key: 'vet', label: 'Veterinarios', count: vets.length }
+          ]}
+        />
       </View>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: '#FAF3F9',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-});
 
 export default ClientsScreen;
