@@ -3,7 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-nat
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-//const defaultImage = require('../../../assets/user-profile-icon.jpg');  
+const defaultImage = require('../../../assets/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg');  
 
 //Componente encargado de cargar imagenes en la parte del frontend
 

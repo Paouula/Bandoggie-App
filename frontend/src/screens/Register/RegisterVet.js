@@ -117,20 +117,20 @@ const RegisterVetScreen = () => {
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate("Login")}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate("Login")}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.logoContainer}>
             <Image
               source={require("../../../assets/LogoBandoggie.png")}
@@ -314,6 +314,14 @@ const RegisterVetScreen = () => {
               style={styles.submitButton}
             />
           </View>
+
+          <View style={styles.decorationContainer}>
+            <View style={styles.decorationGradient}>
+              <View style={styles.gradientSection1} />
+              <View style={styles.gradientSection2} />
+              <View style={styles.gradientSection3} />
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -328,96 +336,116 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
-    justifyContent: "center",
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  backButton: {
+    padding: 10,
+  },
+  closeButton: {
+    padding: 10,
   },
   logoContainer: {
     alignItems: "center",
     marginBottom: 20,
   },
   logo: {
-    width: 120,
-    height: 80,
+    width: 130,
+    height: 50,
+    maxWidth: 130,
   },
   separator: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginHorizontal: 0, // Changed from 20
-    marginBottom: 40,
+    height: 2,
+    backgroundColor: "#b4ceec",
+    marginHorizontal: 0,
+    marginVertical: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
-    color: "#333",
+    marginTop: 10,
+    marginBottom: 20,
+    color: "#365a7d",
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
-  infoContainer: {
-    marginBottom: 40,
-  },
-  infoText: {
-    fontSize: 16,
+  loginLink: {
+    fontSize: 14,
+    color: "#ff9900",
     textAlign: "center",
-    color: "#666",
-    lineHeight: 22,
-    marginBottom: 10,
+    marginBottom: 20,
+    marginTop: 20,
   },
-  emailText: {
-    fontWeight: "bold",
-    color: "#333",
-  },
-  roleText: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#999",
-  },
-  codeContainer: {
-    marginBottom: 40,
-  },
-  submitButton: {
+  profileImageContainer: {
+    alignItems: "center",
     marginBottom: 20,
   },
-  resendContainer: {
-    alignItems: "center",
-    paddingVertical: 10,
+  form: {
+    alignItems: "stretch",
+    marginBottom: 40,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#365a7d",
+    marginTop: 10,
+    marginBottom: 5,
+    textAlign: "left",
+  },
+  labelSpacing: {
+    marginTop: 15,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 5,
     marginBottom: 10,
+    textAlign: "left",
   },
-  resendText: {
+  forgotPassword: {
     fontSize: 14,
-    color: "#007AFF",
-    textDecorationLine: "underline",
+    color: "#ff9900",
+    textAlign: "right",
+    marginTop: 20,
+    marginBottom: 20,
   },
-  disabledResend: {
-    opacity: 0.5,
+  submitButton: {
+    marginTop: 15,
   },
-  disabledText: {
-    color: "#999",
-    textDecorationLine: "none",
+  decorationContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    overflow: "hidden",
   },
-  cancelContainer: {
-    alignItems: "center",
-    paddingVertical: 10,
+  decorationGradient: {
+    flex: 1,
+    flexDirection: "row",
   },
-  cancelText: {
-    fontSize: 14,
-    color: "#FF3B30",
-    textDecorationLine: "underline",
+  gradientSection1: {
+    flex: 1,
+    backgroundColor: "#f7c7de",
   },
-  errorMessage: {
-    fontSize: 16,
-    color: "#FF3B30",
-    textAlign: "center",
-    marginBottom: 15,
+  gradientSection2: {
+    flex: 1,
+    backgroundColor: "#d9f4ff",
   },
-  errorSubMessage: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 30,
+  gradientSection3: {
+    flex: 1,
+    backgroundColor: "#b4ceec",
   },
 });
-
 
 export default RegisterVetScreen;

@@ -88,7 +88,7 @@ const LoginScreen = (props) => {
 
   const handleGoToRegister = () => {
     navigation.navigate("ChooseAccount");
-  };
+      };
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -115,13 +115,7 @@ const LoginScreen = (props) => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleGoBack}
-              disabled={isLoading}
-            >
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+            
           </View>
 
           <View style={styles.logoContainer}>
@@ -260,9 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // Cambiado de 30
     paddingTop: 20,
     paddingBottom: 30,
-    // ELIMINADO: borderRadius: 20,
-    // ELIMINADO: shadowColor: "#000",
-    // ELIMINADO: shadowOffset, shadowOpacity, shadowRadius, elevation
+   
   },
   header: {
     flexDirection: "row",
