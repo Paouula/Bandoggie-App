@@ -12,7 +12,7 @@ import ListAccessories from '../../components/Public/ProductsAccesories/ListAcce
 import useDataAccessories from '../../components/Public/ProductsAccesories/hooks/useDataAccessories';
 
 const Accessories = ({ navigation }) => {
-  const { Accessories, loading, error } = useDataAccessories();
+  const { accessories, loading, error } = useDataAccessories();
 
   if (loading) {
     return (
@@ -79,7 +79,7 @@ const Accessories = ({ navigation }) => {
       {/* Componente de lista de accesorios */}
       <View style={styles.christmasStore}>
         <ListAccessories 
-          Accessories={Accessories} 
+          accessories={accessories} 
           navigation={navigation}
         />
       </View>
