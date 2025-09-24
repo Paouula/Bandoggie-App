@@ -9,9 +9,7 @@ const getAPIUrl = () => {
     // En entorno de desarrollo
     if (Platform.OS === 'android') {
       // Para emulador Android: 10.0.2.2 mapea al localhost de la máquina host
-      // Para dispositivo físico Android: usa tu IP local (ej: 192.168.1.100)
       return "https://bandoggie-production.up.railway.app/api/";
-      // Si usas dispositivo físico, cambia por: "http://TU_IP_LOCAL:4000/api/"
     } else if (Platform.OS === 'ios') {
       // Para iOS simulator: localhost funciona correctamente
       return "https://bandoggie-production.up.railway.app/api/";
@@ -98,13 +96,7 @@ export const API_FETCH_JSON = async (endpoint, options = {}) => {
   }
 };
 
-/**
- * Función para realizar peticiones con FormData (archivos, imágenes, etc.)
- * @param {string} endpoint - El endpoint específico
- * @param {FormData} formData - Datos del formulario con archivos
- * @param {Object} options - Opciones adicionales de la petición
- * @returns {Promise<Object>} - Respuesta JSON de la API
- */
+
 export const API_FETCH_FORM = async (endpoint, formData, options = {}) => {
   try {
     // Log para debugging
@@ -182,14 +174,14 @@ export const testAPIConnection = async () => {
     });
     
     if (response.ok) {
-      console.log('✅ API conectada correctamente');
+      console.log(' API conectada correctamente');
       return true;
     } else {
-      console.log('❌ API respondió con error:', response.status);
+      console.log(' API respondió con error:', response.status);
       return false;
     }
   } catch (error) {
-    console.log('❌ No se pudo conectar con la API:', error.message);
+    console.log(' No se pudo conectar con la API:', error.message);
     return false;
   }
 };
