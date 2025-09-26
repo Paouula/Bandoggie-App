@@ -10,9 +10,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import ListBandanas from '../../components/Public/ProductBandanas/ListBandanas';
 import useDataBandanas from '../../components/Public/ProductBandanas/hooks/useDataBandanas';
+import SearchComponent from '../../components/SearchComponent/SearchComponent';
 
 const BandanasScreen = ({ navigation }) => {
   const { Bandanas, loading, error, retry } = useDataBandanas();
+  const [showSearch, setShowSearch] = useState(false);
+
+  const handleProductPress = (product) => {
+    navigation.navigate('ProductDetail', { 
+      productId: product._id,
+      product: product 
+    });
+  };
 
   if (loading) {
     return (
@@ -63,9 +72,32 @@ const BandanasScreen = ({ navigation }) => {
     );
   }
 
+  if (showSearch) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => setShowSearch(false)}
+            style={styles.headerButton}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Buscar Bandanas</Text>
+          <View style={styles.headerButton} />
+        </View>
+        <SearchComponent
+          data={Bandanas}
+          navigation={navigation}
+          placeholder="Buscar bandanas..."
+          onProductPress={handleProductPress}
+          categories={['Todos', 'Bandanas']}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           onPress={() => navigation?.goBack()}
@@ -74,12 +106,14 @@ const BandanasScreen = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bandanas</Text>
-        <TouchableOpacity style={styles.headerButton}>
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={() => setShowSearch(true)}
+        >
           <Ionicons name="search" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
-      {/* Estadísticas */}
       {Bandanas && Bandanas.length > 0 && (
         <View style={styles.statsContainer}>
           <Text style={styles.statsText}>
@@ -88,7 +122,6 @@ const BandanasScreen = ({ navigation }) => {
         </View>
       )}
 
-      {/* Componente de lista de bandanas */}
       <View style={styles.productContainer}>
         <ListBandanas 
           Bandanas={Bandanas} 
@@ -105,7 +138,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   
-  // Header styles
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -128,7 +160,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   
-  // Stats container
   statsContainer: {
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -140,12 +171,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Product container
   productContainer: {
     flex: 1,
   },
   
-  // Loading state
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -158,7 +187,6 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   
-  // Error state
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
