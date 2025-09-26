@@ -9,24 +9,20 @@ import {
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x300?text=Producto';
+const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x300/F0F0F0/999999?text=Producto';
 
 const ProductCard = ({ product, navigation, onPress }) => {
   const handleClick = () => {
-    // Si se pasa una función onPress personalizada, usarla
     if (onPress) {
       onPress(product);
       return;
     }
 
-    // Si hay navigation disponible, navegar a detalles del producto
     if (navigation) {
       navigation.navigate('ProductDetail', { 
         productId: product._id,
         product: product 
       });
-    } else {
-      console.log('Navegando a producto:', product._id);
     }
   };
 
@@ -34,24 +30,25 @@ const ProductCard = ({ product, navigation, onPress }) => {
     <TouchableOpacity 
       style={styles.productCard} 
       onPress={handleClick}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View style={styles.productImage}>
+      <View style={styles.productImageContainer}>
         <Image 
-          source={{ uri: product.image || PLACEHOLDER_IMAGE }} 
-          style={styles.image}
+          source={{ 
+            uri: product?.image || PLACEHOLDER_IMAGE,
+            cache: 'default'
+          }} 
+          style={styles.productImage}
           resizeMode="cover"
-          onError={(error) => {
-            console.log('Error loading image:', product.image, error);
-          }}
+          defaultSource={{ uri: PLACEHOLDER_IMAGE }}
         />
       </View>
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>
-          {product.nameProduct}
+          {product?.nameProduct || 'Producto'}
         </Text>
         <Text style={styles.productPrice}>
-          Desde ${parseFloat(product.price || 0).toFixed(2)}
+          Desde ${parseFloat(product?.price || 0).toFixed(2)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -61,42 +58,41 @@ const ProductCard = ({ product, navigation, onPress }) => {
 const styles = StyleSheet.create({
   productCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    width: (width - 45) / 2, // Para mostrar 2 columnas con margen
-    marginBottom: 15,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    borderRadius: 8,
+    width: (width - 50) / 2,
+    marginBottom: 20,
+    marginHorizontal: 2,
+    borderWidth: 0.5,
+    borderColor: '#F0F0F0',
     overflow: 'hidden',
+  },
+  productImageContainer: {
+    width: '100%',
+    height: 160,
+    backgroundColor: '#FFFFFF',
+    padding: 12,
   },
   productImage: {
     width: '100%',
-    height: 140,
-    backgroundColor: '#F5F5F5',
-  },
-  image: {
-    width: '100%',
     height: '100%',
+    borderRadius: 4,
   },
   productInfo: {
-    padding: 12,
+    padding: 14,
+    paddingTop: 10,
   },
   productName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 6,
-    lineHeight: 18,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#2C2C2C',
+    marginBottom: 4,
+    lineHeight: 16,
+    letterSpacing: -0.1,
   },
   productPrice: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#FF9F43',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
 });
 
