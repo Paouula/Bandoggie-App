@@ -38,10 +38,10 @@ const useDataAccessories = () => {
       const data = await response.json();
       console.log("Data recibida:", data);
 
-      // Procesar diferentes estructuras de respuesta
+      // Procesamiento de diferentes estructuras de respuesta
       let accessoriesArray = [];
       
-      // Verificar las diferentes estructuras posibles de la respuesta
+      // Verificación de las diferentes estructuras posibles de la respuesta
       if (Array.isArray(data)) {
         accessoriesArray = data;
       } else if (data.products && Array.isArray(data.products)) {

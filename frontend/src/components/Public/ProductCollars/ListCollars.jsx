@@ -2,11 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import ProductCard from "../PublicCardProduct/ProductCardPublic.jsx";
 
-const ListBandanas = ({ Bandanas, navigation }) => {
-  console.log("Bandanas que llegan al componente:", Bandanas);
+const ListCollars = ({ Collars, navigation }) => {
+  console.log("Collars que llegan al componente:", Collars);
 
   // Función para renderizar cada item
-  const renderBandanaItem = ({ item }) => (
+  const renderCollarItem = ({ item }) => (
     <ProductCard 
       key={item._id} 
       product={item} 
@@ -14,11 +14,11 @@ const ListBandanas = ({ Bandanas, navigation }) => {
     />
   );
 
-  // Si no hay bandanas se  mostruestra este mensaje
-  if (!Array.isArray(Bandanas) || Bandanas.length === 0) {
+  // Si no hay collares, mostrar mensaje
+  if (!Array.isArray(Collars) || Collars.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.noBandanasText}>No hay bandanas disponibles</Text>
+        <Text style={styles.noCollarsText}>No hay collares disponibles</Text>
       </View>
     );
   }
@@ -26,8 +26,8 @@ const ListBandanas = ({ Bandanas, navigation }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={Bandanas}
-        renderItem={renderBandanaItem}
+        data={Collars}
+        renderItem={renderCollarItem}
         keyExtractor={(item) => item._id}
         numColumns={2}
         columnWrapperStyle={styles.row}
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 50,
   },
-  noBandanasText: {
+  noCollarsText: {
     textAlign: 'center',
     fontSize: 16,
     color: '#666',
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ListBandanas;
+export default ListCollars;

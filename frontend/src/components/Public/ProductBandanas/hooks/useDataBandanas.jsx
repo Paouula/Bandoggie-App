@@ -9,27 +9,23 @@ const useDataBandanas = () => {
 
   const API_BASE_URL = "https://bandoggie-production.up.railway.app/api";
   
-  // ✅ VERIFICAR QUE ESTOS IDs SEAN CORRECTOS
   // Opción 1: ID específico de categoría bandanas (si existe)
   const BANDANAS_CATEGORY_ID = "68a1475a6b65e3a7962662a1"; 
   
-  // ✅ Opción 2: Si no tienes categorías específicas, usar endpoint general
-  // const FETCH_ALL_PRODUCTS = true; // Flag para obtener todos los productos
+  // pción 2: Si no tienes categorías específicas, usar endpoint general
+  // const FETCH_ALL_PRODUCTS = true; -- Flag para obtener todos los productos
 
   const fetchBandanas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log("🔍 Iniciando fetch de bandanas...");
+      console.log("Iniciando fetch de bandanas...");
       
-      // ✅ OPCIÓN 1: Usar categoría específica
       let url = `${API_BASE_URL}/products/category/${BANDANAS_CATEGORY_ID}`;
       
-      // ✅ OPCIÓN 2: Si falla, intentar con todos los productos
-      // let url = `${API_BASE_URL}/products`;
       
-      console.log("📍 URL:", url);
+      console.log("URL:", url);
 
       const response = await fetch(url, {
         method: 'GET',
@@ -39,11 +35,11 @@ const useDataBandanas = () => {
         },
       });
 
-      console.log("📡 Response status:", response.status);
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
-        // ✅ Si falla la categoría específica, intentar con todos los productos
-        console.log("⚠️ Error con categoría específica, intentando con todos los productos...");
+        //Si falla la categoría específica, intentar con todos los productos
+        console.log("Error con categoría específica, intentando con todos los productos...");
         
         const fallbackUrl = `${API_BASE_URL}/products`;
         const fallbackResponse = await fetch(fallbackUrl, {
@@ -59,22 +55,22 @@ const useDataBandanas = () => {
         }
 
         const allProducts = await fallbackResponse.json();
-        console.log("📦 Todos los productos:", allProducts);
+        console.log("Todos los productos:", allProducts);
         
-        // ✅ Filtrar productos que contengan "bandana" en el nombre
+        //Filtrar productos que contengan "bandana" en el nombre
         const bandanasFiltered = allProducts.filter(product => 
           product.nameProduct?.toLowerCase().includes('bandana') ||
           product.name?.toLowerCase().includes('bandana') ||
           product.category?.toLowerCase().includes('bandana')
         );
 
-        console.log("🎯 Bandanas filtradas:", bandanasFiltered);
+        console.log("Bandanas filtradas:", bandanasFiltered);
         setBandanas(bandanasFiltered || []);
         return;
       }
 
       const data = await response.json();
-      console.log("✅ Data recibida:", data);
+      console.log("Data recibida:", data);
 
       // Procesar diferentes estructuras de respuesta
       let bandanasArray = [];
@@ -88,15 +84,15 @@ const useDataBandanas = () => {
       } else if (data.result && Array.isArray(data.result)) {
         bandanasArray = data.result;
       } else {
-        console.error("❌ Estructura de datos inesperada:", data);
+        console.error("Estructura de datos inesperada:", data);
         bandanasArray = [];
       }
 
-      console.log("🎯 Bandanas procesadas:", bandanasArray.length);
+      console.log("Bandanas procesadas:", bandanasArray.length);
       setBandanas(bandanasArray);
 
     } catch (err) {
-      console.error("❌ Error completo:", err);
+      console.error("Error completo:", err);
       const errorMessage = err.message || 'Error al cargar bandanas';
       setError(errorMessage);
       setBandanas([]);
