@@ -17,18 +17,20 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
 // Importar componentes personalizados
-import InputComponent from "../components/InputComponent";
-import ButtonComponent from "../components/ButtonComponent";
-import PasswordInput from "../components/PasswordInput";
-import DatePickerInput from "../components/DatePickerInput";
-import ImageLoader from "../components/ImageLoader";
-import useFetchRegister from "../hooks/Register/useFetchRegister";
+import InputComponent from "../../components/Input/Input.js";
+import ButtonComponent from "../../components/Button/Button.js";
+import PasswordInput from "../../components/InputPassword/InputPassword.js";
+import DatePickerInput from "../../components/InputDataPicker/InputDataPicker.js";
+import ImageLoader from "../../components/ImageLoader/ImageLoader.js";
+import useFetchRegister from "../../hooks/Register/useFetchRegister";
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { handleRegister } = useFetchRegister();
+  const { updateVerificationInfo, setPendingVerification } = useAuth();
 
   const {
     control,
@@ -36,8 +38,10 @@ const RegisterScreen = () => {
     reset,
     setValue,
     watch,
-    formState: { errors },
-  } = useForm();
+    formState: { errors, isValid },
+  } = useForm({
+    mode: "onChange",
+  });
 
   const phoneValue = watch("phone", "");
 
@@ -82,8 +86,16 @@ const RegisterScreen = () => {
       );
       
       if (response) {
+        // Actualizar información de verificación en el contexto
+        await updateVerificationInfo({
+          email: data.email,
+          role: "client"
+        });
+        setPendingVerification(true);
+        
         reset();
         setProfileImage(null);
+        
         // Navegar a verificación de código
         navigation.navigate("VerificationCode", {
           email: data.email,
@@ -118,22 +130,19 @@ const RegisterScreen = () => {
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -141,10 +150,10 @@ const RegisterScreen = () => {
 
           <View style={styles.separator} />
 
-          <Text style={styles.title}>REGISTRO</Text>
+          <Text style={styles.title}>Registro</Text>
 
           {/* Link de login */}
-          <TouchableOpacity onPress={handleLogin}>
+          <TouchableOpacity onPress={handleLogin} disabled={isSubmitting}>
             <Text style={styles.loginLink}>
               ¿Ya tienes una cuenta? Inicia sesión
             </Text>
@@ -182,6 +191,7 @@ const RegisterScreen = () => {
                   }}
                   onBlur={onBlur}
                   leftIcon="person-outline"
+                  editable={!isSubmitting}
                 />
               )}
             />
@@ -197,21 +207,27 @@ const RegisterScreen = () => {
               control={control}
               name="email"
               rules={{
-                required: "El correo es obligatorio",
+                required: "El correo electrónico es obligatorio",
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Correo electrónico inválido",
+                  message: "Ingresa un correo electrónico válido",
+                },
+                minLength: {
+                  value: 5,
+                  message: "El correo debe tener al menos 5 caracteres",
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <InputComponent
-                  placeholder="Correo Electrónico"
+                  placeholder="ejemplo@correo.com"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  leftIcon="mail-outline"
+                  autoComplete="email"
+                  rightIcon="📧"
+                  editable={!isSubmitting}
                 />
               )}
             />
@@ -241,6 +257,7 @@ const RegisterScreen = () => {
                       value={value}
                       onChange={onChange}
                       placeholder="Seleccionar fecha"
+                      disabled={isSubmitting}
                     />
                   )}
                 />
@@ -272,6 +289,7 @@ const RegisterScreen = () => {
                       keyboardType="numeric"
                       maxLength={9}
                       leftIcon="call-outline"
+                      editable={!isSubmitting}
                     />
                   )}
                 />
@@ -289,12 +307,8 @@ const RegisterScreen = () => {
               rules={{
                 required: "La contraseña es obligatoria",
                 minLength: {
-                  value: 8,
-                  message: "Debe tener al menos 8 caracteres",
-                },
-                maxLength: {
-                  value: 30,
-                  message: "Debe tener un máximo de 30 caracteres",
+                  value: 6,
+                  message: "La contraseña debe tener al menos 6 caracteres",
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -303,6 +317,8 @@ const RegisterScreen = () => {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  editable={!isSubmitting}
+                  autoComplete="password"
                 />
               )}
             />
@@ -311,7 +327,10 @@ const RegisterScreen = () => {
             )}
 
             {/* Link olvidé contraseña */}
-            <TouchableOpacity onPress={() => navigation.navigate("RequestCode")}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate("RequestCode")}
+              disabled={isSubmitting}
+            >
               <Text style={styles.forgotPassword}>
                 ¿Olvidaste tu contraseña?
               </Text>
@@ -319,12 +338,23 @@ const RegisterScreen = () => {
 
             {/* Botón de registro */}
             <ButtonComponent
-              title={isSubmitting ? "Enviando..." : "Siguiente"}
+              title="Siguiente"
               onPress={handleSubmit(onSubmit)}
               loading={isSubmitting}
-              disabled={isSubmitting}
-              style={styles.submitButton}
+              disabled={isSubmitting || !isValid}
+              style={[
+                styles.submitButton,
+                (!isValid || isSubmitting) && styles.disabledButton,
+              ]}
             />
+          </View>
+
+          <View style={styles.decorationContainer}>
+            <View style={styles.decorationGradient}>
+              <View style={styles.gradientSection1} />
+              <View style={styles.gradientSection2} />
+              <View style={styles.gradientSection3} />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -342,14 +372,15 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 30,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    marginBottom: 10,
   },
   backButton: {
     padding: 10,
@@ -359,45 +390,50 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 15,
+    marginBottom: 20,
   },
   logo: {
-    width: 100,
-    height: 60,
+    width: 130,
+    height: 50,
+    maxWidth: 130,
   },
   separator: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginHorizontal: 20,
-    marginBottom: 20,
+    height: 2,
+    backgroundColor: "#b4ceec",
+    marginHorizontal: 0,
+    marginVertical: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 15,
-    color: "#333",
+    marginTop: 10,
+    marginBottom: 20,
+    color: "#365a7d",
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
   loginLink: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#ff9900",
     textAlign: "center",
     marginBottom: 20,
-    textDecorationLine: "underline",
+    marginTop: 20,
   },
   profileImageContainer: {
     alignItems: "center",
     marginBottom: 20,
   },
   form: {
-    flex: 1,
+    alignItems: "stretch",
+    marginBottom: 40,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#365a7d",
+    marginTop: 10,
+    marginBottom: 5,
+    textAlign: "left",
   },
   labelSpacing: {
     marginTop: 15,
@@ -414,18 +450,45 @@ const styles = StyleSheet.create({
     color: "#FF3B30",
     fontSize: 12,
     marginTop: 5,
-    marginBottom: 5,
+    marginBottom: 10,
+    textAlign: "left",
   },
   forgotPassword: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#ff9900",
     textAlign: "right",
-    marginTop: 15,
+    marginTop: 20,
     marginBottom: 20,
-    textDecorationLine: "underline",
   },
   submitButton: {
-    marginTop: 20,
+    marginTop: 15,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  decorationContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    overflow: "hidden",
+  },
+  decorationGradient: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  gradientSection1: {
+    flex: 1,
+    backgroundColor: "#f7c7de",
+  },
+  gradientSection2: {
+    flex: 1,
+    backgroundColor: "#d9f4ff",
+  },
+  gradientSection3: {
+    flex: 1,
+    backgroundColor: "#b4ceec",
   },
 });
 

@@ -1,0 +1,352 @@
+/* Grid contenedor - Responsive optimizado */
+.product-grid {
+  display: grid !important; 
+  grid-template-columns: repeat(2, 1fr) !important; /* 2 columnas por defecto (móvil) */
+  gap: 12px !important;
+  padding: 12px !important;
+  max-width: 1280px !important;
+  margin: 0 auto !important;
+}
+
+/* Móviles pequeños (hasta 374px) */
+@media (max-width: 374px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+}
+
+/* Móviles (375px - 480px) */
+@media (min-width: 375px) and (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Móviles grandes y tablets pequeños (481px - 640px) */
+@media (min-width: 481px) and (max-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+    padding: 16px !important;
+  }
+}
+
+/* Tablets (641px - 768px) */
+@media (min-width: 641px) and (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px !important;
+    padding: 18px !important;
+  }
+}
+
+/* Tablets grandes (769px - 1023px) */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 20px !important;
+    padding: 20px !important;
+  }
+}
+
+/* Desktop (1024px - 1279px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 22px !important;
+    padding: 22px !important;
+  }
+}
+
+/* Desktop grande (1280px+) */
+@media (min-width: 1280px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 24px !important;
+    padding: 24px !important;
+  }
+}
+
+/*coso*/
+
+/* Tarjeta de producto */
+.product-card {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+  padding: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+  position: relative !important;
+}
+
+/* Forzar fondo blanco en todos los elementos hijos */
+.product-card,
+.product-card *:not(.product-image img),
+.product-card::before,
+.product-card::after {
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+}
+
+.product-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #d1d5db !important;
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+}
+
+.product-image {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-bottom: 12px !important;
+  background: white !important;
+  background-color: white !important;
+  background-image: none !important;
+  border-radius: 3px !important;
+  border: #374151 !important;
+  padding: 8px !important;
+  min-height: 100px !important;
+}
+
+.product-image img {
+  width: 100% !important;
+  max-width: 80px !important;
+  height: 80px !important;
+  object-fit: cover !important;
+  border-radius: 6px !important;
+  display: block !important;
+}
+
+/* Responsive para móviles pequeños */
+@media (max-width: 374px) {
+  .product-card {
+    padding: 8px !important;
+  }
+  
+  .product-image {
+    padding: 6px !important;
+    min-height: 80px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .product-image img {
+    max-width: 60px !important;
+    height: 60px !important;
+  }
+}
+
+/* Responsive para móviles */
+@media (min-width: 375px) and (max-width: 480px) {
+  .product-card {
+    padding: 10px !important;
+  }
+
+  .product-image {
+    padding: 8px !important;
+    min-height: 90px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .product-image img {
+    max-width: 70px !important;
+    height: 70px !important;
+  }
+}
+
+/* Responsive para móviles grandes y tablets pequeños */
+@media (min-width: 481px) and (max-width: 640px) {
+  .product-card {
+    padding: 12px !important;
+  }
+
+  .product-image {
+    padding: 8px !important;
+    min-height: 100px !important;
+  }
+
+  .product-image img {
+    max-width: 80px !important;
+    height: 80px !important;
+  }
+}
+
+/* Responsive para tablets */
+@media (min-width: 641px) and (max-width: 768px) {
+  .product-card {
+    padding: 14px !important;
+  }
+
+  .product-image {
+    padding: 10px !important;
+    min-height: 120px !important;
+  }
+
+  .product-image img {
+    max-width: 90px !important;
+    height: 90px !important;
+  }
+}
+
+/* Responsive para tablets grandes */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .product-card {
+    padding: 16px !important;
+  }
+
+  .product-image {
+    padding: 10px !important;
+    min-height: 140px !important;
+  }
+
+  .product-image img {
+    max-width: 110px !important;
+    height: 110px !important;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .product-card {
+    padding: 16px !important;
+  }
+
+  .product-image {
+    padding: 12px !important;
+    min-height: 160px !important;
+  }
+
+  .product-image img {
+    max-width: 120px !important;
+    height: 120px !important;
+  }
+}
+
+/* Desktop grande */
+@media (min-width: 1280px) {
+  .product-card {
+    padding: 18px !important;
+  }
+
+  .product-image {
+    padding: 12px !important;
+    min-height: 180px !important;
+  }
+  
+  .product-image img {
+    max-width: 140px !important;
+    height: 140px !important;
+  }
+}
+
+.product-info {
+  padding: 0 !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.product-name {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  margin-bottom: 6px !important;
+  line-height: 1.2 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  order: 1 !important;
+}
+
+.product-price {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  order: 2 !important;
+}
+
+/* Responsive para textos en móviles pequeños */
+@media (max-width: 374px) {
+  .product-name {
+    font-size: 0.7rem !important;
+    margin-bottom: 4px !important;
+    -webkit-line-clamp: 1 !important;
+  }
+
+  .product-price {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Responsive para móviles */
+@media (min-width: 375px) and (max-width: 480px) {
+  .product-name {
+    font-size: 0.75rem !important;
+    margin-bottom: 5px !important;
+  }
+
+  .product-price {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* Responsive para tablets pequeños */
+@media (min-width: 481px) and (max-width: 640px) {
+  .product-name {
+    font-size: 0.8rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  .product-price {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Responsive para tablets */
+@media (min-width: 641px) and (max-width: 768px) {
+  .product-name {
+    font-size: 0.85rem !important;
+    margin-bottom: 8px !important;
+  }
+
+  .product-price {
+    font-size: 0.95rem !important;
+  }
+}
+
+/* Responsive para tablets grandes y desktop */
+@media (min-width: 769px) {
+  .product-name {
+    font-size: 0.9rem !important;
+    margin-bottom: 8px !important;
+  }
+
+  .product-price {
+    font-size: 1rem !important;
+  }
+}
+
+/* Desktop grande - textos un poco más grandes */
+@media (min-width: 1280px) {
+  .product-name {
+    font-size: 0.95rem !important;
+  }
+
+  .product-price {
+    font-size: 1.1rem !important;
+  }
+}

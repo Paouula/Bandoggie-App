@@ -1,30 +1,102 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { View, Image, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-//const defaultImage = require('../../../assets/user-profile-icon.jpg');  
-
-//Componente encargado de cargar imagenes en la parte del frontend
+ const defaultImage = require('../../../assets/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg');  
 
 const ImageLoader = ({ onImageChange }) => {
   const [imageUri, setImageUri] = useState(null);
 
-  const handleImagePick = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        quality: 0.8,
-      },
-      (response) => {
-        if (response.didCancel || response.errorCode) return;
+  // Solicitar permisos
+  const requestPermissions = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permisos necesarios',
+          'La aplicación necesita acceso a tu galería para seleccionar imágenes.',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.log('Error requesting permission:', error);
+      return false;
+    }
+  };
 
-        const uri = response.assets?.[0]?.uri;
-        if (uri) {
-          setImageUri(uri);
-          if (onImageChange) onImageChange(response.assets[0]);
+  const handleImagePick = async () => {
+    // Solicitar permisos primero
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Para imagen cuadrada
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        setImageUri(uri);
+        
+        if (onImageChange) {
+          onImageChange(result.assets[0]);
         }
       }
+    } catch (error) {
+      console.log('Error picking image:', error);
+      Alert.alert('Error', 'Hubo un problema al seleccionar la imagen');
+    }
+  };
+
+  // Opción adicional para tomar foto con cámara
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permisos necesarios',
+          'La aplicación necesita acceso a tu cámara para tomar fotos.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        setImageUri(uri);
+        
+        if (onImageChange) {
+          onImageChange(result.assets[0]);
+        }
+      }
+    } catch (error) {
+      console.log('Error taking photo:', error);
+      Alert.alert('Error', 'Hubo un problema al tomar la foto');
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Seleccionar imagen',
+      'Elige una opción',
+      [
+        { text: 'Galería', onPress: handleImagePick },
+        { text: 'Cámara', onPress: handleTakePhoto },
+        { text: 'Cancelar', style: 'cancel' }
+      ]
     );
   };
 
@@ -35,7 +107,7 @@ const ImageLoader = ({ onImageChange }) => {
           source={imageUri ? { uri: imageUri } : defaultImage}
           style={styles.profilePic}
         />
-        <TouchableOpacity style={styles.uploadButton} onPress={handleImagePick}>
+        <TouchableOpacity style={styles.uploadButton} onPress={showImageOptions}>
           <Icon name="camera" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -45,7 +117,6 @@ const ImageLoader = ({ onImageChange }) => {
 
 const { width } = Dimensions.get('window');
 
-//Estilos del componente para cargar imagenes
 const styles = StyleSheet.create({
   container: {
     padding: 24,

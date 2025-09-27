@@ -16,17 +16,19 @@ import { useForm, Controller } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 
 // Importar componentes personalizados
-import InputComponent from "../components/InputComponent";
-import ButtonComponent from "../components/ButtonComponent";
-import PasswordInput from "../components/PasswordInput";
-import ImageLoader from "../components/ImageLoader";
-import useFetchRegisterVet from "../hooks/Register/useFetchRegisterVet";
+import InputComponent from "../../components/Input/Input.js";
+import ButtonComponent from "../../components/Button/Button.js";
+import PasswordInput from "../../components/InputPassword/InputPassword.js";
+import ImageLoader from "../../components/ImageLoader/ImageLoader.js";
+import useFetchRegisterVet from "../../hooks/Register/useFetchRegisterVet";
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterVetScreen = () => {
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { handleRegister } = useFetchRegisterVet();
+  const { updateVerificationInfo, setPendingVerification } = useAuth();
 
   const {
     control,
@@ -86,8 +88,16 @@ const RegisterVetScreen = () => {
       );
 
       if (response) {
+        // Actualizar información de verificación en el contexto
+        await updateVerificationInfo({
+          email: data.email,
+          role: "vet"
+        });
+        setPendingVerification(true);
+        
         reset();
         setProfileImage(null);
+        
         // Navegar a verificación de código
         navigation.navigate("VerificationCode", {
           email: data.email,
@@ -107,23 +117,20 @@ const RegisterVetScreen = () => {
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -289,7 +296,7 @@ const RegisterVetScreen = () => {
             )}
 
             {/* Link olvidé contraseña */}
-            <TouchableOpacity onPress={() => navigation.navigate("RequestCode")}>
+            <TouchableOpacity onPress={() => Alert.alert("Función no disponible", "Esta función estará disponible próximamente.")}>
               <Text style={styles.forgotPassword}>
                 ¿Olvidaste tu contraseña?
               </Text>
@@ -303,6 +310,14 @@ const RegisterVetScreen = () => {
               disabled={isSubmitting}
               style={styles.submitButton}
             />
+          </View>
+
+          <View style={styles.decorationContainer}>
+            <View style={styles.decorationGradient}>
+              <View style={styles.gradientSection1} />
+              <View style={styles.gradientSection2} />
+              <View style={styles.gradientSection3} />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -320,14 +335,16 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 30,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    alignItems: "center",
+    marginBottom: 10,
   },
   backButton: {
     padding: 10,
@@ -337,45 +354,50 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  logo: {
-    width: 100,
-    height: 60,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginHorizontal: 20,
     marginBottom: 20,
   },
+  logo: {
+    width: 130,
+    height: 50,
+    maxWidth: 130,
+  },
+  separator: {
+    height: 2,
+    backgroundColor: "#b4ceec",
+    marginHorizontal: 0,
+    marginVertical: 20,
+  },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 15,
-    color: "#333",
+    marginTop: 10,
+    marginBottom: 20,
+    color: "#365a7d",
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
   loginLink: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#ff9900",
     textAlign: "center",
     marginBottom: 20,
-    textDecorationLine: "underline",
+    marginTop: 20,
   },
   profileImageContainer: {
     alignItems: "center",
     marginBottom: 20,
   },
   form: {
-    flex: 1,
+    alignItems: "stretch",
+    marginBottom: 40,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#365a7d",
+    marginTop: 10,
+    marginBottom: 5,
+    textAlign: "left",
   },
   labelSpacing: {
     marginTop: 15,
@@ -384,18 +406,42 @@ const styles = StyleSheet.create({
     color: "#FF3B30",
     fontSize: 12,
     marginTop: 5,
-    marginBottom: 5,
+    marginBottom: 10,
+    textAlign: "left",
   },
   forgotPassword: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#ff9900",
     textAlign: "right",
-    marginTop: 15,
+    marginTop: 20,
     marginBottom: 20,
-    textDecorationLine: "underline",
   },
   submitButton: {
-    marginTop: 20,
+    marginTop: 15,
+  },
+  decorationContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    overflow: "hidden",
+  },
+  decorationGradient: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  gradientSection1: {
+    flex: 1,
+    backgroundColor: "#f7c7de",
+  },
+  gradientSection2: {
+    flex: 1,
+    backgroundColor: "#d9f4ff",
+  },
+  gradientSection3: {
+    flex: 1,
+    backgroundColor: "#b4ceec",
   },
 });
 

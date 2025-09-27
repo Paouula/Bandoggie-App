@@ -21,7 +21,8 @@ import ButtonComponent from "../../components/Button/Button.js";
 import PasswordInput from "../../components/InputPassword/InputPassword.js";
 import { useAuth } from "../../context/AuthContext";
 
-const LoginScreen = () => {
+// AHORA RECIBE onLogin POR PROPS
+const LoginScreen = (props) => {
   const navigation = useNavigation();
   const { Login, loadingUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -32,39 +33,20 @@ const LoginScreen = () => {
     reset,
     formState: { errors, isValid },
   } = useForm({
-    mode: "onChange", // Valida los campos
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const navigateBasedOnUserType = (userType) => {
-    const routes = {
-      employee: "AdminProducts",
-      vet: "MainPage",
-      client: "MainPage",
-    };
-
-    const targetRoute = routes[userType];
-    
-    if (targetRoute) {
-      // Usar replace para evitar que puedan volver atrás al login
-      navigation.replace(targetRoute);
-    } else {
-      Alert.alert("Error", "Tipo de usuario no reconocido.");
-    }
-  };
-
   const onSubmit = async (formData) => {
-    // Verificar que no hay carga en progreso
     if (isLoading || loadingUser) {
       return;
     }
 
     const { email, password } = formData;
 
-    // Validación adicional (aunque react-hook-form ya valida)
     if (!email?.trim() || !password?.trim()) {
       Alert.alert("Error", "Por favor, completa todos los campos.");
       return;
@@ -73,29 +55,19 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     try {
-      // Usar la función Login del AuthContext
       const response = await Login(email.trim(), password);
 
       if (response.success) {
-        // Limpiar formulario
         reset();
-        
-        // Mostrar mensaje de éxito (opcional, ya que el toast lo maneja)
-        Alert.alert(
-          "¡Bienvenido!", 
-          "Sesión iniciada correctamente", 
-          [
-            {
-              text: "Continuar",
-              onPress: () => navigateBasedOnUserType(response.userType),
-            },
-          ],
-          { cancelable: false }
-        );
+        // LLAMA A LA PROP onLogin PARA AVISAR QUE EL USUARIO ESTÁ AUTENTICADO
+        if (props.onLogin) {
+          props.onLogin();
+        }
+        // Si quieres mostrar un mensaje, puedes hacerlo aquí
+        // Alert.alert("¡Bienvenido!", "Sesión iniciada correctamente");
       } else {
-        // El error ya fue mostrado por el toast en el hook
         Alert.alert(
-          "Error de autenticación", 
+          "Error de autenticación",
           response.message || "No se pudo iniciar sesión"
         );
       }
@@ -116,13 +88,12 @@ const LoginScreen = () => {
 
   const handleGoToRegister = () => {
     navigation.navigate("ChooseAccount");
-  };
+      };
 
   const handleGoBack = () => {
     navigation.goBack();
   };
 
-  // Si el contexto está cargando, mostrar loading
   if (loadingUser) {
     return (
       <SafeAreaView style={styles.container}>
@@ -143,21 +114,13 @@ const LoginScreen = () => {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header con botón de cerrar */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleGoBack}
-              disabled={isLoading}
-            >
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+            
           </View>
 
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/LogoBandoggie.png")}
+              source={require("../../../assets/LogoBandoggie.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -165,10 +128,8 @@ const LoginScreen = () => {
 
           <View style={styles.separator} />
 
-          {/* Título */}
           <Text style={styles.title}>Iniciar Sesión</Text>
 
-          {/* Link de registro */}
           <TouchableOpacity
             onPress={handleGoToRegister}
             disabled={isLoading}
@@ -178,7 +139,6 @@ const LoginScreen = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* Formulario */}
           <View style={styles.form}>
             <Text style={styles.label}>Correo Electrónico</Text>
             <Controller
@@ -239,7 +199,6 @@ const LoginScreen = () => {
               <Text style={styles.errorText}>{errors.password.message}</Text>
             )}
 
-            {/* Link de olvidé contraseña */}
             <TouchableOpacity
               onPress={handleForgotPassword}
               disabled={isLoading}
@@ -249,7 +208,6 @@ const LoginScreen = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* Botón de confirmación */}
             <ButtonComponent
               title="Iniciar Sesión"
               onPress={handleSubmit(onSubmit)}
@@ -262,7 +220,6 @@ const LoginScreen = () => {
             />
           </View>
 
-          {/* Decoración inferior */}
           <View style={styles.decorationContainer}>
             <View style={styles.decorationGradient}>
               <View style={styles.gradientSection1} />
@@ -279,37 +236,25 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
+    backgroundColor: "#fff", // Cambiado de rgba(0, 0, 0, 0.5)
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 20,
     padding: 30,
   },
   keyboardView: {
-    width: "100%",
-    maxWidth: 450,
+    flex: 1, // Removido maxWidth y constrains de ancho
   },
   scrollContainer: {
+    flexGrow: 1,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 30,
+    paddingHorizontal: 20, // Cambiado de 30
     paddingTop: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
-    position: "relative",
+    paddingBottom: 30,
+   
   },
   header: {
     flexDirection: "row",
@@ -317,15 +262,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   closeButton: {
-    padding: 5,
-    position: "absolute",
-    top: -10,
-    right: -15,
-    zIndex: 1001,
+    padding: 10,
+    // ELIMINADO: position: "absolute", top: -10, right: -15, zIndex: 1001
   },
   logoContainer: {
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 20, // Aumentado de 10
   },
   logo: {
     width: 130,
@@ -335,8 +277,8 @@ const styles = StyleSheet.create({
   separator: {
     height: 2,
     backgroundColor: "#b4ceec",
-    marginHorizontal: -30,
-    marginVertical: 10,
+    marginHorizontal: 0, // Cambiado de -30
+    marginVertical: 20, // Aumentado de 10
   },
   title: {
     fontSize: 24,
@@ -348,7 +290,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
   registerLink: {
-    fontSize: 12,
+    fontSize: 14, // Aumentado de 12
     color: "#ff9900",
     textAlign: "center",
     marginBottom: 20,
@@ -356,7 +298,7 @@ const styles = StyleSheet.create({
   },
   form: {
     alignItems: "stretch",
-    marginBottom: 60,
+    marginBottom: 40, // Reducido de 60
   },
   label: {
     fontSize: 14,
@@ -377,7 +319,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   forgotPassword: {
-    fontSize: 12,
+    fontSize: 14, // Aumentado de 12
     color: "#ff9900",
     textAlign: "right",
     marginTop: 20,
@@ -395,9 +337,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 40,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
     overflow: "hidden",
+    // ELIMINADO: borderBottomLeftRadius y borderBottomRightRadius
   },
   decorationGradient: {
     flex: 1,
