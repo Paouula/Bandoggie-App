@@ -1,9 +1,3 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import useFetchLogin from "../hooks/Login/useFetchLogin";
-import { API_FETCH_JSON } from "../config";
-import Toast from "react-native-toast-message";
-
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -32,14 +26,14 @@ export const AuthProvider = ({ children }) => {
 
       return {
         success: true,
-        message: data.message || "Sesión iniciada correctamente",
+        message: data.message || "SesiÃ³n iniciada correctamente",
         userType: userData.userType,
         user: userData,
       };
     } catch (error) {
       return {
         success: false,
-        message: error.message || "Error al iniciar sesión",
+        message: error.message || "Error al iniciar sesiÃ³n",
       };
     }
   };
@@ -52,9 +46,9 @@ export const AuthProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
       });
 
-      Toast.show({ type: "success", text1: "Sesión cerrada correctamente" });
+      Toast.show({ type: "success", text1: "SesiÃ³n cerrada correctamente" });
     } catch (error) {
-      Toast.show({ type: "error", text1: "Error al cerrar sesión" });
+      Toast.show({ type: "error", text1: "Error al cerrar sesiÃ³n" });
     } finally {
       await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("verificationInfo");
@@ -123,7 +117,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (hasPendingVerification && !storedVerificationInfo) {
-        Toast.show({ type: "error", text1: "No se han encontrado los datos de verificación necesarios" });
+        Toast.show({ type: "error", text1: "No se han encontrado los datos de verificaciÃ³n necesarios" });
       }
 
       return hasPendingVerification;
