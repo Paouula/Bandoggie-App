@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
 import Header from '../../../components/Private/Product/ProductHeader.js';
-import SearchBar from '../../../components/Private/Product/SearchBar.js';
+import ActionButtons from '../../../components/Private/Product/ActionButton.js'
+import SearchBar from '../../../components/Private/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
 import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
+import CreateProductModal from '../../../components/Private/Product/CreateProductModal.js';
 
 const ProductosScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [productos, setProductos] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false); // 👈 nuevo estado
 
   const { handleGetProducts } = useFetchProducts();
 
@@ -35,6 +38,24 @@ const ProductosScreen = () => {
       )
     : [];
 
+  // 👇 abrir modal al presionar "Agregar"
+  const handleAgregarProducto = () => {
+    setModalVisible(true);
+  };
+
+  // 👇 cerrar modal
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
+
+  // 👇 acción cuando se crea un producto
+  const handleCreateProduct = async (productData) => {
+    console.log('Producto creado:', productData);
+    // Aquí podrías llamar a tu API para guardar el producto
+    // Luego recargar productos:
+    await loadProducts();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {loading ? (
@@ -51,12 +72,27 @@ const ProductosScreen = () => {
           ListHeaderComponent={() => (
             <View style={styles.headerContainer}>
               <Header />
-              <SearchBar searchText={searchText} setSearchText={setSearchText} />
+              <SearchBar 
+                searchText={searchText} 
+                setSearchText={setSearchText} 
+                handleAgregarProducto={handleAgregarProducto} // 👈 se pasa aquí
+              />
+              <ActionButtons />
               <View style={styles.productsStartBackground} />
             </View>
           )}
         />
       )}
+
+      {/* Modal de creación */}
+      <CreateProductModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        onCreateProduct={handleCreateProduct}
+        categories={['Collares', 'Ropa', 'Accesorios']}
+        festivities={['Navidad', 'Halloween', 'Cumpleaños']}
+        loading={loading}
+      />
     </SafeAreaView>
   );
 };
@@ -64,17 +100,17 @@ const ProductosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa', // Fondo blanco/neutral para toda la pantalla
+    backgroundColor: '#f8f9fa',
   },
   headerContainer: {
-    backgroundColor: '#f8f9fa', // Fondo blanco para header y search
+    backgroundColor: '#f8f9fa',
   },
   productsStartBackground: {
     height: 10,
-    backgroundColor: '#ffe6f0', // Aquí empieza el fondo rosa
+    backgroundColor: '#ffe6f0',
   },
   listContent: {
-    backgroundColor: '#ffe6f0', // Fondo rosa para el área de productos
+    backgroundColor: '#ffe6f0',
     paddingHorizontal: 10,
     paddingTop: 0,
     paddingBottom: 20,

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import SearchBar from '../../../components/Private/Product/SearchBar';  // Asegúrate de importar el SearchBar aquí
+import SearchBar from '../../../components/Private/SearchBar';  // Asegúrate de importar el SearchBar aquí
 
 const EmpleadosScreen = () => {
   const [searchText, setSearchText] = useState('');
