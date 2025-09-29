@@ -1,65 +1,174 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
 import Header from '../../../components/Private/Product/ProductHeader.js';
-import ActionButtons from '../../../components/Private/Product/ActionButton.js'
+import ActionButtons from '../../../components/Private/Product/ActionButton.js';
 import SearchBar from '../../../components/Private/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
-import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
 import CreateProductModal from '../../../components/Private/Product/CreateProductModal.js';
+import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
+import Toast from 'react-native-toast-message';
+import { API_URL } from '../../../config';
 
 const ProductosScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [productos, setProductos] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false); // 👈 nuevo estado
+  const [modalVisible, setModalVisible] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [holidays, setHolidays] = useState([]);
 
-  const { handleGetProducts } = useFetchProducts();
+  // Hook de productos
+  const { handleGetProducts, handlePostProducts } = useFetchProducts();
 
   useEffect(() => {
-    loadProducts();
+    loadInitialData();
   }, []);
 
+  // Función para obtener categorías
+  const getCategories = async () => {
+    try {
+      const response = await fetch(`${API_URL}categories`);
+      if (!response.ok) {
+        throw new Error('Error al cargar categorías');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron cargar las categorías'
+      });
+      return [];
+    }
+  };
+
+  // Función para obtener festividades
+  const getHolidays = async () => {
+    try {
+      const response = await fetch(`${API_URL}holiday`);
+      if (!response.ok) {
+        throw new Error('Error al cargar festividades');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error loading holidays:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron cargar las festividades'
+      });
+      return [];
+    }
+  };
+
+  // Cargar productos, categorías y festividades al iniciar
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      const [productsData, categoriesData, holidaysData] = await Promise.all([
+        handleGetProducts(),
+        getCategories(),
+        getHolidays()
+      ]);
+      
+      setProductos(productsData || []);
+      setCategories(categoriesData || []);
+      setHolidays(holidaysData || []);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron cargar los datos'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recargar solo productos
   const loadProducts = async () => {
     try {
       setLoading(true);
       const data = await handleGetProducts();
       setProductos(data || []);
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los productos');
+      console.error('Error loading products:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudieron cargar los productos'
+      });
       setProductos([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Filtrar productos según búsqueda
   const filteredProducts = Array.isArray(productos)
     ? productos.filter(producto =>
         producto.nameProduct?.toLowerCase().includes(searchText.toLowerCase())
       )
     : [];
 
-  // 👇 abrir modal al presionar "Agregar"
+  // Abrir modal de creación
   const handleAgregarProducto = () => {
     setModalVisible(true);
   };
 
-  // 👇 cerrar modal
+  // Cerrar modal
   const handleCloseModal = () => {
     setModalVisible(false);
   };
 
-  // 👇 acción cuando se crea un producto
+  // Crear producto
   const handleCreateProduct = async (productData) => {
-    console.log('Producto creado:', productData);
-    // Aquí podrías llamar a tu API para guardar el producto
-    // Luego recargar productos:
-    await loadProducts();
+    try {
+      setLoading(true);
+      
+      console.log('📝 [SCREEN] Recibiendo datos del modal...');
+      console.log('📝 [SCREEN] Datos recibidos:', {
+        nameProduct: productData.nameProduct,
+        price: productData.price,
+        descriptionLength: productData.description.length,
+        hasImage: !!productData.image,
+        designImagesCount: productData.designImages?.length || 0,
+        idCategory: productData.idCategory,
+        idHolidayProduct: productData.idHolidayProduct
+      });
+      
+      // El modal ya prepara los datos correctamente
+      // El hook handlePostProducts construirá el FormData
+      await handlePostProducts(productData);
+      
+      console.log('✅ [SCREEN] Producto creado exitosamente');
+      
+      // Cerrar modal y recargar productos
+      handleCloseModal();
+      await loadProducts();
+      
+    } catch (error) {
+      console.error('💥 [SCREEN] Error creating product:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'No se pudo crear el producto'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#4a90a4" style={{ marginTop: 20 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4a90a4" />
+        </View>
       ) : (
         <FlatList
           data={filteredProducts}
@@ -75,7 +184,7 @@ const ProductosScreen = () => {
               <SearchBar 
                 searchText={searchText} 
                 setSearchText={setSearchText} 
-                handleAgregarProducto={handleAgregarProducto} // 👈 se pasa aquí
+                handleAgregarProducto={handleAgregarProducto}
               />
               <ActionButtons />
               <View style={styles.productsStartBackground} />
@@ -84,15 +193,18 @@ const ProductosScreen = () => {
         />
       )}
 
-      {/* Modal de creación */}
+      {/* Modal de creación de producto */}
       <CreateProductModal
         visible={modalVisible}
         onClose={handleCloseModal}
         onCreateProduct={handleCreateProduct}
-        categories={['Collares', 'Ropa', 'Accesorios']}
-        festivities={['Navidad', 'Halloween', 'Cumpleaños']}
+        categories={categories}
+        festivities={holidays}
         loading={loading}
       />
+      
+      {/* Toast para notificaciones */}
+      <Toast />
     </SafeAreaView>
   );
 };
@@ -100,6 +212,12 @@ const ProductosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
   headerContainer: {
