@@ -16,11 +16,11 @@ import {
   FlatList
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { styles } from './CartStyle'; // Importar estilos desde archivo separado
+import { styles } from './CartStyle';
 
 const { width } = Dimensions.get('window');
 
-// Componente selector personalizado para Expo Go
+// Componente selector personalizado
 const CustomPicker = ({ selectedValue, onValueChange, items, placeholder, style, error }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -91,14 +91,12 @@ const CustomPicker = ({ selectedValue, onValueChange, items, placeholder, style,
 };
 
 const CartScreen = ({ navigation }) => {
-  // Estados principales
   const [cartItems, setCartItems] = useState([]);
   const [currentStep, setCurrentStep] = useState('cart');
   const [paymentMethod, setPaymentMethod] = useState('transferencia');
   const [loading, setLoading] = useState(true);
   const [guestId, setGuestId] = useState(null);
 
-  // Estados del formulario
   const [formData, setFormData] = useState({
     email: '',
     nombre: '',
@@ -110,10 +108,8 @@ const CartScreen = ({ navigation }) => {
     telefono: ''
   });
 
-  // Estados de validación
   const [errors, setErrors] = useState({});
 
-  // Opciones para los selectores
   const departamentos = [
     { label: 'Seleccionar departamento', value: '' },
     { label: 'San Salvador', value: 'san-salvador' },
@@ -131,14 +127,12 @@ const CartScreen = ({ navigation }) => {
     { label: 'Ciudad Delgado', value: 'ciudad-delgado' },
   ];
 
-  // Generar ID de invitado único
   const generateGuestId = useCallback(() => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
     return `guest_${timestamp}_${random}`;
   }, []);
 
-  // Cargar carrito desde AsyncStorage
   const loadCartFromStorage = useCallback(async () => {
     try {
       console.log('📄 Cargando carrito desde AsyncStorage...');
@@ -147,7 +141,7 @@ const CartScreen = ({ navigation }) => {
       console.log('📦 Carrito raw desde AsyncStorage:', savedCart);
       
       if (!savedCart || savedCart === 'undefined' || savedCart === 'null') {
-        console.log('⚠ No hay carrito guardado o está vacío');
+        console.log('⚠️ No hay carrito guardado o está vacío');
         setCartItems([]);
         return;
       }
@@ -156,20 +150,19 @@ const CartScreen = ({ navigation }) => {
       console.log('📋 Carrito parseado:', parsedCart);
       
       if (!Array.isArray(parsedCart)) {
-        console.log('⚠ El carrito no es un array válido');
+        console.log('⚠️ El carrito no es un array válido');
         setCartItems([]);
         return;
       }
 
       if (parsedCart.length === 0) {
-        console.log(' El carrito está vacío');
+        console.log('🛒 El carrito está vacío');
         setCartItems([]);
         return;
       }
 
-      // Normalizar cada item del carrito
       const normalizedCart = parsedCart.map((item, index) => {
-        console.log(` Normalizando item ${index}:`, item);
+        console.log(`🔄 Normalizando item ${index}:`, item);
         
         const normalizedItem = {
           _id: item._id || item.id || `temp_${Date.now()}_${index}`,
@@ -182,29 +175,29 @@ const CartScreen = ({ navigation }) => {
           talla: item.talla || null,
           color: item.color || null,
           petName: item.petName || null,
-          image: item.image || (item.productInfo && item.productInfo.image) || null
+          image: item.image || (item.productInfo && item.productInfo.image) || null,
+          productInfo: item.productInfo || {}
         };
         
-        console.log(` Item normalizado ${index}:`, normalizedItem);
+        console.log(`✅ Item normalizado ${index}:`, normalizedItem);
         return normalizedItem;
       });
       
-      console.log(' Carrito final normalizado:', normalizedCart);
-      console.log(` Total de items en el carrito: ${normalizedCart.length}`);
+      console.log('✅ Carrito final normalizado:', normalizedCart);
+      console.log(`📊 Total de items en el carrito: ${normalizedCart.length}`);
       
       setCartItems(normalizedCart);
       
     } catch (error) {
-      console.error('⚠ Error cargando carrito desde AsyncStorage:', error);
+      console.error('❌ Error cargando carrito desde AsyncStorage:', error);
       setCartItems([]);
       Alert.alert('Error', 'Error al cargar el carrito');
     }
   }, []);
 
-  // Inicializar componente
   useEffect(() => {
     const initializeCart = async () => {
-      console.log(' Inicializando CartScreen...');
+      console.log('🚀 Inicializando CartScreen...');
       
       try {
         setLoading(true);
@@ -212,18 +205,18 @@ const CartScreen = ({ navigation }) => {
         if (!guestId) {
           const newGuestId = generateGuestId();
           setGuestId(newGuestId);
-          console.log(' Generated guest ID:', newGuestId);
+          console.log('🆔 Generated guest ID:', newGuestId);
         }
 
         await loadCartFromStorage();
         
       } catch (error) {
-        console.error('⚠ Error initializing cart:', error);
+        console.error('❌ Error initializing cart:', error);
         Alert.alert('Error', 'Error al inicializar el carrito');
       } finally {
         setTimeout(() => {
           setLoading(false);
-          console.log(' CartScreen inicializado');
+          console.log('✅ CartScreen inicializado');
         }, 500);
       }
     };
@@ -231,7 +224,16 @@ const CartScreen = ({ navigation }) => {
     initializeCart();
   }, [guestId, generateGuestId, loadCartFromStorage]);
 
-  // Guardar carrito en AsyncStorage
+  // Actualizar carrito cuando la pantalla obtiene foco
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('🔄 CartScreen obtuvo foco, recargando carrito...');
+      loadCartFromStorage();
+    });
+
+    return unsubscribe;
+  }, [navigation, loadCartFromStorage]);
+
   const saveCartToStorage = useCallback(async (items) => {
     try {
       if (items.length > 0) {
@@ -243,11 +245,33 @@ const CartScreen = ({ navigation }) => {
         console.log('🗑️ Carrito limpiado del AsyncStorage');
       }
     } catch (error) {
-      console.error('⚠ Error saving cart to AsyncStorage:', error);
+      console.error('❌ Error saving cart to AsyncStorage:', error);
     }
   }, []);
 
-  // Funciones de validación
+  // Navegar al detalle del producto
+  const navigateToProductDetail = (item) => {
+    try {
+      const product = {
+        _id: item._id || item.id,
+        nameProduct: item.nameProduct || item.name,
+        price: item.price,
+        image: item.image,
+        description: item.productInfo?.description || '',
+        designImages: item.productInfo?.designImages || [item.image],
+        idCategory: item.idCategory || null
+      };
+
+      console.log('🔗 Navegando al detalle del producto:', product.nameProduct);
+      
+      navigation.navigate('ProductDetail', { product });
+      
+    } catch (error) {
+      console.error('❌ Error navegando al detalle:', error);
+      Alert.alert('Error', 'No se pudo abrir el detalle del producto');
+    }
+  };
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -266,7 +290,6 @@ const CartScreen = ({ navigation }) => {
     return name && name.trim().length >= 2;
   };
 
-  // Manejar cambios en el formulario
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -281,7 +304,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Validar formulario de checkout
   const validateCheckoutForm = () => {
     const newErrors = {};
 
@@ -301,7 +323,6 @@ const CartScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Validar formulario de entrega
   const validateDeliveryForm = () => {
     const newErrors = {};
 
@@ -325,7 +346,6 @@ const CartScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Agregar producto al carrito
   const addToCart = async (product, quantity = 1) => {
     try {
       const updatedItems = [...cartItems];
@@ -352,7 +372,8 @@ const CartScreen = ({ navigation }) => {
           talla: product.talla || null,
           color: product.color || null,
           petName: product.petName || null,
-          image: product.image || null
+          image: product.image || null,
+          productInfo: product.productInfo || {}
         };
         updatedItems.push(newItem);
       }
@@ -366,7 +387,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Remover producto del carrito
   const removeFromCart = async (productId) => {
     try {
       const updatedItems = cartItems.filter(item => 
@@ -381,7 +401,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Actualizar cantidad
   const updateQuantity = async (productId, quantity) => {
     try {
       if (quantity <= 0) {
@@ -408,7 +427,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Limpiar carrito
   const clearCart = () => {
     Alert.alert(
       'Confirmar',
@@ -432,7 +450,6 @@ const CartScreen = ({ navigation }) => {
     );
   };
 
-  // Calcular totales
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => {
       const price = parseFloat(item.price) || 0;
@@ -450,7 +467,6 @@ const CartScreen = ({ navigation }) => {
     return `$${numPrice.toFixed(2)}`;
   };
 
-  // Función para agregar producto de ejemplo
   const addSampleProduct = () => {
     const sampleProduct = {
       _id: `sample_${Date.now()}`,
@@ -458,29 +474,27 @@ const CartScreen = ({ navigation }) => {
       price: Math.floor(Math.random() * 50) + 10,
       image: null,
       talla: 'M',
-      petName: null
+      petName: null,
+      productInfo: {}
     };
     addToCart(sampleProduct, 1);
   };
 
-  // Enviar email bancario (corregido)
   const sendBankingDetailsEmail = async (orderData) => {
     try {
       console.log('📧 Enviando email bancario para:', orderData.customerInfo.email);
       
-      // Generar referencia corta de 6-8 caracteres como en la captura
       const shortReference = guestId ? guestId.slice(-8).toUpperCase() : `REF${Date.now().toString().slice(-6)}`;
       
       const emailPayload = {
         customerName: `${orderData.customerInfo.nombre} ${orderData.customerInfo.apellido}`,
         email: orderData.customerInfo.email,
         totalAmount: orderData.total,
-        orderNumber: shortReference // Usar solo la referencia corta
+        orderNumber: shortReference
       };
 
       console.log('📤 Payload del email:', emailPayload);
 
-      // CAMBIAR ESTA URL POR LA DE TU SERVIDOR
       const response = await fetch('https://bandoggie.onrender.com/api/email/send-simple-banking-email', {
         method: 'POST',
         headers: {
@@ -499,7 +513,7 @@ const CartScreen = ({ navigation }) => {
           errorData = { error: `Error HTTP ${response.status}` };
         }
         
-        console.error('⚠ Error del servidor:', errorData);
+        console.error('❌ Error del servidor:', errorData);
         throw new Error(errorData.error || `Error del servidor: ${response.status}`);
       }
 
@@ -515,7 +529,7 @@ const CartScreen = ({ navigation }) => {
       };
 
     } catch (error) {
-      console.error('⚠ Error completo:', error);
+      console.error('❌ Error completo:', error);
       
       let errorMessage = 'Error al enviar el email con datos bancarios';
       
@@ -540,7 +554,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Procesar compra
   const processCheckout = async () => {
     try {
       setLoading(true);
@@ -585,7 +598,6 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Navegar entre pasos
   const nextStep = () => {
     try {
       if (currentStep === 'cart') {
@@ -607,12 +619,10 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  // Calcular totales para mostrar
   const subtotal = getCartTotal();
   const shipping = 3.50;
   const total = subtotal + shipping;
 
-  // Componente de loading
   if (loading && currentStep !== 'payment') {
     return (
       <SafeAreaView style={styles.container}>
@@ -625,14 +635,13 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Vista de Confirmación
   if (currentStep === 'confirmation') {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.confirmationContainer}>
-            <View style={styles.checkmark}>
+            <View style={styles.checkmarkContainer}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>
             
@@ -684,7 +693,7 @@ const CartScreen = ({ navigation }) => {
                 });
                 setCurrentStep('cart');
                 setErrors({});
-                navigation.goBack();
+                navigation.navigate('Home');
               }}
             >
               <Text style={styles.continueButtonText}>Volver al catálogo</Text>
@@ -695,7 +704,6 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Vista del Carrito
   if (currentStep === 'cart') {
     return (
       <SafeAreaView style={styles.container}>
@@ -719,7 +727,7 @@ const CartScreen = ({ navigation }) => {
               
               <TouchableOpacity 
                 style={styles.primaryButton}
-                onPress={() => navigation.goBack()}
+                onPress={() => navigation.navigate('Home')}
               >
                 <Text style={styles.primaryButtonText}>Ir al catálogo</Text>
               </TouchableOpacity>
@@ -734,7 +742,11 @@ const CartScreen = ({ navigation }) => {
               
               {cartItems.map(item => (
                 <View key={item._id || item.id} style={styles.cartItemCard}>
-                  <View style={styles.cartItemContent}>
+                  <TouchableOpacity 
+                    style={styles.cartItemContent}
+                    onPress={() => navigateToProductDetail(item)}
+                    activeOpacity={0.7}
+                  >
                     <View style={styles.productImageContainer}>
                       {item.image ? (
                         <Image 
@@ -763,7 +775,10 @@ const CartScreen = ({ navigation }) => {
                         <View style={styles.quantityControls}>
                           <TouchableOpacity 
                             style={styles.quantityButton}
-                            onPress={() => updateQuantity(item._id || item.id, item.quantity - 1)}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(item._id || item.id, item.quantity - 1);
+                            }}
                             disabled={loading}
                           >
                             <Text style={styles.quantityButtonText}>−</Text>
@@ -771,7 +786,10 @@ const CartScreen = ({ navigation }) => {
                           <Text style={styles.quantityText}>{item.quantity}</Text>
                           <TouchableOpacity 
                             style={styles.quantityButton}
-                            onPress={() => updateQuantity(item._id || item.id, item.quantity + 1)}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(item._id || item.id, item.quantity + 1);
+                            }}
                             disabled={loading}
                           >
                             <Text style={styles.quantityButtonText}>+</Text>
@@ -781,15 +799,15 @@ const CartScreen = ({ navigation }) => {
                         <Text style={styles.itemSubtotal}>{formatPrice(item.subtotal)}</Text>
                       </View>
                     </View>
-                    
-                    <TouchableOpacity 
-                      style={styles.removeButton}
-                      onPress={() => removeFromCart(item._id || item.id)}
-                      disabled={loading}
-                    >
-                      <Text style={styles.removeButtonText}>🗑</Text>
-                    </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.removeButton}
+                    onPress={() => removeFromCart(item._id || item.id)}
+                    disabled={loading}
+                  >
+                    <Text style={styles.removeButtonText}>🗑</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
 
@@ -822,7 +840,6 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Vista de Checkout
   if (currentStep === 'checkout') {
     return (
       <SafeAreaView style={styles.container}>
@@ -905,7 +922,6 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Vista de Entrega
   if (currentStep === 'delivery') {
     return (
       <SafeAreaView style={styles.container}>
@@ -1028,7 +1044,6 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Vista de Pago
   if (currentStep === 'payment') {
     return (
       <SafeAreaView style={styles.container}>
@@ -1076,7 +1091,7 @@ const CartScreen = ({ navigation }) => {
 
               {paymentMethod === 'transferencia' ? (
                 <View style={styles.paymentContent}>
-                  <View style={styles.checkmark}>
+                  <View style={styles.checkmarkContainer}>
                     <Text style={styles.checkmarkText}>✓</Text>
                   </View>
                   <Text style={styles.confirmationTitle}>Confirmación de pedido</Text>
@@ -1123,7 +1138,6 @@ const CartScreen = ({ navigation }) => {
     );
   }
 
-  // Fallback
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />

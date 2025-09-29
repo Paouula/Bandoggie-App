@@ -9,10 +9,12 @@ import {
   Dimensions,
   ActivityIndicator,
   TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useFetchProducts from '../../hooks/Products/useFetchProducts';
 
 const { width } = Dimensions.get('window');
@@ -32,8 +34,8 @@ export default function FestivitiesScreen({ navigation, route }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
 
-  // Obtener parámetros de la ruta
   const festivityId = route?.params?.festivityId;
   const festivityName = route?.params?.festivityName || 'Festividad';
   const festivityColor = route?.params?.festivityColor || '#FF6B6B';
@@ -42,20 +44,38 @@ export default function FestivitiesScreen({ navigation, route }) {
     loadFestivityProducts();
   }, [festivityId]);
 
+  useEffect(() => {
+    updateCartCount();
+    const unsubscribe = navigation.addListener('focus', updateCartCount);
+    return unsubscribe;
+  }, [navigation]);
+
+  const updateCartCount = async () => {
+    try {
+      const cartString = await AsyncStorage.getItem('bandoggie_cart');
+      if (cartString && cartString !== 'undefined' && cartString !== 'null') {
+        const cart = JSON.parse(cartString);
+        const count = cart.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
+        setCartCount(count);
+      } else {
+        setCartCount(0);
+      }
+    } catch (error) {
+      console.error('Error obteniendo contador del carrito:', error);
+      setCartCount(0);
+    }
+  };
+
   const loadFestivityProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Obtener todos los productos
       const allProducts = await handleGetProducts();
-      
-      // Filtrar productos por festividad
       const festivityProducts = allProducts.filter(product => {
         const productHolidayId = 
           product.idHolidayProduct?._id || 
           product.idHolidayProduct;
-        
         return productHolidayId === festivityId;
       });
       
@@ -91,32 +111,113 @@ export default function FestivitiesScreen({ navigation, route }) {
     }
   };
 
-  const addToCart = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Éxito',
-      text2: `${selectedProduct.nameProduct} agregado al carrito`
-    });
-    console.log('Agregado al carrito:', {
-      product: selectedProduct,
-      size: selectedSize,
-      quantity: quantity,
-      petName: petName
-    });
+  const addToCart = async () => {
+    try {
+      if (!selectedProduct) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No hay producto seleccionado'
+        });
+        return;
+      }
+
+      const cartItem = {
+        _id: selectedProduct._id || `temp_${Date.now()}`,
+        id: selectedProduct._id || `temp_${Date.now()}`,
+        name: selectedProduct.nameProduct,
+        nameProduct: selectedProduct.nameProduct,
+        price: parseFloat(selectedProduct.price) || 0,
+        quantity: quantity,
+        subtotal: (parseFloat(selectedProduct.price) || 0) * quantity,
+        talla: selectedSize,
+        color: selectedColor === 0 ? 'Diseño 1' : 'Diseño 2',
+        petName: nameFieldEnabled ? petName : null,
+        image: selectedProduct.image,
+        productInfo: {
+          image: selectedProduct.image,
+          designImages: selectedProduct.designImages,
+          description: selectedProduct.description
+        }
+      };
+
+      const cartString = await AsyncStorage.getItem('bandoggie_cart');
+      let cart = [];
+      
+      if (cartString && cartString !== 'undefined' && cartString !== 'null') {
+        cart = JSON.parse(cartString);
+      }
+
+      const existingItemIndex = cart.findIndex(item => 
+        item._id === cartItem._id && 
+        item.talla === cartItem.talla &&
+        item.color === cartItem.color &&
+        item.petName === cartItem.petName
+      );
+
+      if (existingItemIndex !== -1) {
+        cart[existingItemIndex].quantity += quantity;
+        cart[existingItemIndex].subtotal = 
+          cart[existingItemIndex].quantity * cart[existingItemIndex].price;
+        
+        Toast.show({
+          type: 'success',
+          text1: 'Actualizado',
+          text2: `Cantidad actualizada en el carrito`
+        });
+      } else {
+        cart.push(cartItem);
+        
+        Toast.show({
+          type: 'success',
+          text1: 'Éxito',
+          text2: `${selectedProduct.nameProduct} agregado al carrito`
+        });
+      }
+
+      await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(cart));
+      await updateCartCount();
+
+      console.log('✅ Producto agregado al carrito:', {
+        product: selectedProduct.nameProduct,
+        size: selectedSize,
+        quantity: quantity,
+        petName: petName,
+        totalItems: cart.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error agregando al carrito:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo agregar al carrito'
+      });
+    }
   };
 
-  const buyNow = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Comprar',
-      text2: `Procesando compra de ${selectedProduct.nameProduct}`
-    });
-    console.log('Comprar ahora:', {
-      product: selectedProduct,
-      size: selectedSize,
-      quantity: quantity,
-      petName: petName
-    });
+  const buyNow = async () => {
+    try {
+      await addToCart();
+      
+      setTimeout(() => {
+        navigation.navigate('Cart');
+        
+        Toast.show({
+          type: 'info',
+          text1: 'Carrito',
+          text2: 'Procede con tu compra'
+        });
+      }, 1000);
+
+    } catch (error) {
+      console.error('❌ Error en comprar ahora:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo procesar la compra'
+      });
+    }
   };
 
   if (loading) {
@@ -144,7 +245,6 @@ export default function FestivitiesScreen({ navigation, route }) {
     );
   }
 
-  // Vista de lista de productos
   if (currentView === 'list') {
     return (
       <SafeAreaView style={styles.container}>
@@ -153,8 +253,16 @@ export default function FestivitiesScreen({ navigation, route }) {
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{festivityName}</Text>
-          <TouchableOpacity>
-            <Ionicons name="search" size={24} color="#333" />
+          <TouchableOpacity 
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Ionicons name="cart-outline" size={24} color="#333" />
+            {cartCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -188,7 +296,6 @@ export default function FestivitiesScreen({ navigation, route }) {
     );
   }
 
-  // Vista de detalle del producto
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -196,11 +303,20 @@ export default function FestivitiesScreen({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalle del Producto</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity 
+          style={styles.cartButton}
+          onPress={() => navigation.navigate('Cart')}
+        >
+          <Ionicons name="cart-outline" size={24} color="#333" />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
-        {/* Imagen principal del producto */}
         <View style={styles.mainImageContainer}>
           <Image 
             source={{ 
@@ -211,7 +327,6 @@ export default function FestivitiesScreen({ navigation, route }) {
           />
         </View>
 
-        {/* Imágenes pequeñas */}
         {selectedProduct?.designImages && selectedProduct.designImages.length > 0 && (
           <View style={styles.thumbnailContainer}>
             {selectedProduct.designImages.map((image, index) => (
@@ -233,12 +348,10 @@ export default function FestivitiesScreen({ navigation, route }) {
           </View>
         )}
 
-        {/* Información del producto */}
         <View style={styles.productInfo}>
           <Text style={styles.detailTitle}>{selectedProduct?.nameProduct}</Text>
           <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct?.price || 0).toFixed(2)}</Text>
           
-          {/* Rating */}
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingNumber}>5.0</Text>
             <View style={styles.starsContainer}>
@@ -254,12 +367,10 @@ export default function FestivitiesScreen({ navigation, route }) {
             <Text style={styles.reviewsText}>(15 evaluaciones)</Text>
           </View>
 
-          {/* Descripción */}
           {selectedProduct?.description && (
             <Text style={styles.description}>{selectedProduct.description}</Text>
           )}
 
-          {/* Diseño (Colores) */}
           <Text style={styles.sectionTitle}>Diseño</Text>
           <View style={styles.colorsContainer}>
             <TouchableOpacity
@@ -280,7 +391,6 @@ export default function FestivitiesScreen({ navigation, route }) {
             />
           </View>
 
-          {/* Talla */}
           <Text style={styles.sectionTitle}>Talla</Text>
           <View style={styles.sizesContainer}>
             {['XS', 'S', 'M', 'L'].map((size) => (
@@ -300,7 +410,6 @@ export default function FestivitiesScreen({ navigation, route }) {
             ))}
           </View>
 
-          {/* Guía de tallas */}
           <TouchableOpacity 
             style={styles.sizeGuide}
             onPress={() => setShowSizeGuide(true)}
@@ -309,7 +418,6 @@ export default function FestivitiesScreen({ navigation, route }) {
             <Text style={styles.sizeGuideText}>Guía de tallas</Text>
           </TouchableOpacity>
 
-          {/* Modal para la guía de tallas */}
           {showSizeGuide && (
             <View style={styles.sizeGuideOverlay}>
               <View style={styles.sizeGuideModal}>
@@ -328,7 +436,6 @@ export default function FestivitiesScreen({ navigation, route }) {
             </View>
           )}
 
-          {/* Nombre del perrito */}
           <View style={styles.nameContainer}>
             <Text style={styles.sectionTitle}>Nombre</Text>
             <TouchableOpacity 
@@ -352,7 +459,6 @@ export default function FestivitiesScreen({ navigation, route }) {
             />
           )}
 
-          {/* Cantidad */}
           <Text style={styles.sectionTitle}>Cantidad</Text>
           <View style={styles.quantityContainer}>
             <TouchableOpacity 
@@ -374,7 +480,6 @@ export default function FestivitiesScreen({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* Botones de acción con cantidad integrada */}
       <View style={styles.actionButtons}>
         <View style={styles.bottomQuantityContainer}>
           <TouchableOpacity 
@@ -462,6 +567,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  cartButton: {
+    position: 'relative',
+    padding: 5,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  cartBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   noProductsContainer: {
     flex: 1,
@@ -774,20 +900,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   addToCartText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  buyNowButton: {
-    backgroundColor: '#FFB3D9',
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
-  buyNowText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-});
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+      },
+    });
