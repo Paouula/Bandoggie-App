@@ -1,76 +1,98 @@
-import { toast } from 'react-hot-toast';
-//Importo la funcion global para realizar el fetch
+import { Alert } from 'react-native';
 import { API_FETCH_JSON } from '../../config';
 
-//Creo una constante que contendra los metodos
-const useFetchEmployees = () => {
-    //Declaro el endpoint
-    const endpoint = 'employees';
+const endpoint = 'employees';
 
-    // Obtener todos los empleados
-    const handleGetEmployees = async () => {
+const employeeService = {
+    getEmployees: async () => {
         try {
             const data = await API_FETCH_JSON(endpoint);
-            return data;
+            console.log('Datos del backend:', JSON.stringify(data, null, 2));
+            return data.map(emp => ({
+                ...emp,
+                nombreUsuario: emp.usuario || emp.nombre || ''
+            }));
         } catch (error) {
-            toast.error('Error al obtener empleados');
-            console.error(error);
+            console.error('Error al obtener empleados:', error);
+            throw error;
         }
-    };
+    },
 
-    // Crear un nuevo empleado
-    const handlePostEmployee = async (employeeData) => {
+    createEmployee: async (employeeData) => {
         try {
+            console.log('Enviando datos para crear empleado:', employeeData);
             const data = await API_FETCH_JSON(endpoint, {
                 method: 'POST',
                 body: employeeData,
             });
-
-            toast.success('Empleado registrado correctamente');
+            console.log('Empleado creado exitosamente:', data);
             return data;
         } catch (error) {
-            toast.error('Error al registrar empleado');
-            console.error(error);
+            console.error('Error al crear empleado:', error);
+            console.error('Detalles del error:', error.response?.data || error.message);
+            throw error;
         }
-    };
+    },
 
-    // Actualizar un empleado existente
-    const handlePutEmployee = async (id, employeeData) => {
+    updateEmployee: async (id, employeeData) => {
         try {
+            if (!id) {
+                throw new Error('ID de empleado no válido');
+            }
+            console.log('Actualizando empleado ID:', id);
+            console.log('Datos a enviar:', JSON.stringify(employeeData, null, 2));
             const data = await API_FETCH_JSON(`${endpoint}/${id}`, {
                 method: 'PUT',
                 body: employeeData,
             });
-
-            toast.success('Empleado actualizado correctamente');
+            console.log('Empleado actualizado exitosamente:', data);
             return data;
         } catch (error) {
-            toast.error('Error al actualizar empleado');
-            console.error(error);
+            console.error('Error al actualizar empleado ID:', id);
+            console.error('Datos que se intentaron enviar:', JSON.stringify(employeeData, null, 2));
+            console.error('Error completo:', error);
+            console.error('Respuesta del servidor:', error.response?.data || error.message);
+            const errorMessage = error.response?.data?.message || 
+                               error.response?.data?.error ||
+                               error.message || 
+                               'Error desconocido al actualizar empleado';
+            const detailedError = new Error(errorMessage);
+            detailedError.response = error.response;
+            detailedError.originalError = error;
+            throw detailedError;
         }
-    };
+    },
 
-    // Eliminar un empleado
-    const handleDeleteEmployee = async (id) => {
+    deleteEmployee: async (id) => {
         try {
+            if (!id) {
+                throw new Error('ID de empleado no válido');
+            }
+            console.log('Eliminando empleado ID:', id);
             const data = await API_FETCH_JSON(`${endpoint}/${id}`, {
                 method: 'DELETE',
             });
-
-            toast.success('Empleado eliminado correctamente');
+            console.log('Empleado eliminado exitosamente');
             return data;
         } catch (error) {
-            toast.error('Error al eliminar empleado');
-            console.error(error);
+            console.error('Error al eliminar empleado:', error);
+            console.error('Detalles del error:', error.response?.data || error.message);
+            throw error;
         }
-    };
+    },
 
-    return {
-        handleGetEmployees,
-        handlePostEmployee,
-        handlePutEmployee,
-        handleDeleteEmployee,
-    };
+    searchEmployees: async (searchTerm) => {
+        try {
+            const data = await API_FETCH_JSON(`${endpoint}/search?q=${encodeURIComponent(searchTerm)}`);
+            return data.map(emp => ({
+                ...emp,
+                nombreUsuario: emp.usuario || emp.nombre || ''
+            }));
+        } catch (error) {
+            console.error('Error al buscar empleados:', error);
+            throw error;
+        }
+    }
 };
 
-export default useFetchEmployees;
+export default employeeService;
