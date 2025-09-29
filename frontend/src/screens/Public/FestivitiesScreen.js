@@ -4,494 +4,790 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
-  TextInput,
-  SafeAreaView,
-  StatusBar,
+  Image,
   Dimensions,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import useFetchProducts from '../../hooks/Products/useFetchProducts';
-import ProductCard from '../../components/ProductCard';
 
 const { width } = Dimensions.get('window');
 
-// Configuración de festividades con sus IDs
-const FESTIVITIES_CONFIG = {
-  '68a4ce2aa2099a968645d55f': {
-    name: 'Cumpleaños',
-    color: '#FF69B4',
-    emoji: '🎂',
-    description: 'Celebra el cumpleaños de tu mascota con estilo'
-  },
-  '68a4c746a2099a968645d546': {
-    name: 'Días Patrios',
-    color: '#0047AB',
-    emoji: '🎖️',
-    description: 'Viste a tu mascota con orgullo patrio'
-  },
-  '68a4b29c8ae388e19910c1fa': {
-    name: 'San Valentín',
-    color: '#FF1493',
-    emoji: '💕',
-    description: 'Amor y ternura para tu mascota especial'
-  },
-  '689555222515953c7bbe9f8f': {
-    name: 'Halloween',
-    color: '#FF6600',
-    emoji: '🎃',
-    description: 'Disfraces espeluznantes para tu mascota'
-  },
-  '68d2df3638119eb2888be34b': {
-    name: 'Navidad',
-    color: '#C41E3A',
-    emoji: '🎄',
-    description: 'Magia navideña para tu compañero peludo'
-  }
-};
-
-const FestivitiesScreen = ({ navigation, route }) => {
-  const [searchText, setSearchText] = useState('');
-  const [festivityProducts, setFestivityProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
+export default function FestivitiesScreen({ navigation, route }) {
   const { handleGetProducts } = useFetchProducts();
   
-  // Obtener configuración de la festividad actual
-  const HolidaysId = route?.params?.HolidaysId || '68d2df3638119eb2888be34b';
-  const festivityConfig = FESTIVITIES_CONFIG[HolidaysId] || {
-    name: 'Festividad',
-    color: '#FF6B6B',
-    emoji: '🎉',
-    description: 'Productos especiales para tu mascota'
-  };
+  const [currentView, setCurrentView] = useState('list');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [quantity, setQuantity] = useState(1);
+  const [petName, setPetName] = useState('');
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Obtener parámetros de la ruta
+  const festivityId = route?.params?.festivityId;
+  const festivityName = route?.params?.festivityName || 'Festividad';
+  const festivityColor = route?.params?.festivityColor || '#FF6B6B';
 
   useEffect(() => {
     loadFestivityProducts();
-  }, [HolidaysId]);
-
-  useEffect(() => {
-    if (searchText.trim() === '') {
-      setFilteredProducts(festivityProducts);
-    } else {
-      const filtered = festivityProducts.filter(product =>
-        product.nameProduct?.toLowerCase().includes(searchText.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-    }
-  }, [searchText, festivityProducts]);
+  }, [festivityId]);
 
   const loadFestivityProducts = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // Obtener todos los productos
       const allProducts = await handleGetProducts();
       
-      console.log('Todos los productos recibidos:', allProducts?.length || 0);
-      console.log('ID de festividad a buscar:', HolidaysId);
-      console.log('Nombre de festividad:', festivityConfig.name);
-      
-      if (allProducts && Array.isArray(allProducts)) {
-        // Filtrar productos por festividad
-        const filteredByFestivity = allProducts.filter(product => {
-          const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
-          
-          // Log para debugging
-          if (productHolidayId) {
-            console.log(`Producto: ${product.nameProduct}, Holiday ID: ${productHolidayId}`);
-          }
-          
-          return productHolidayId === HolidaysId;
-        });
-
-        console.log(`Productos encontrados para ${festivityConfig.name}:`, filteredByFestivity.length);
+      // Filtrar productos por festividad
+      const festivityProducts = allProducts.filter(product => {
+        const productHolidayId = 
+          product.idHolidayProduct?._id || 
+          product.idHolidayProduct;
         
-        setFestivityProducts(filteredByFestivity);
-        setFilteredProducts(filteredByFestivity);
-      } else {
-        console.warn('No se recibieron productos válidos');
-        setFestivityProducts([]);
-        setFilteredProducts([]);
-      }
-    } catch (error) {
-      console.error('Error al cargar productos de festividad:', error);
-      setFestivityProducts([]);
-      setFilteredProducts([]);
+        return productHolidayId === festivityId;
+      });
+      
+      setProducts(festivityProducts);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading festivity products:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleProductPress = (product) => {
-    console.log('Producto seleccionado:', product.nameProduct);
-    // Navegar a detalle del producto si tienes esa pantalla
-    // navigation.navigate('ProductDetail', { product });
+  const openProductDetail = (product) => {
+    setSelectedProduct(product);
+    setSelectedImageIndex(0);
+    setCurrentView('detail');
   };
 
-  const handleSearch = (text) => {
-    setSearchText(text);
+  const goBackToList = () => {
+    setCurrentView('list');
+    setSelectedProduct(null);
   };
 
-  const handleBackPress = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
+  const increaseQuantity = () => {
+    if (quantity < 5) {
+      setQuantity(quantity + 1);
     }
   };
 
-  const renderProductsContent = () => {
-    if (loading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={festivityConfig.color} />
-          <Text style={styles.loadingText}>Cargando productos...</Text>
-        </View>
-      );
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
     }
+  };
 
-    if (filteredProducts.length === 0) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>{festivityConfig.emoji}</Text>
-          <Text style={styles.emptyTitle}>
-            {searchText ? 'Sin resultados' : 'Sin productos'}
-          </Text>
-          <Text style={styles.emptyDescription}>
-            {searchText 
-              ? `No encontramos productos que coincidan con "${searchText}"`
-              : `Aún no hay productos disponibles para ${festivityConfig.name}`
-            }
-          </Text>
-          {searchText && (
-            <TouchableOpacity 
-              style={[styles.clearSearchButton, { backgroundColor: festivityConfig.color }]}
-              onPress={() => setSearchText('')}
-            >
-              <Text style={styles.clearSearchText}>Limpiar búsqueda</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      );
-    }
+  const addToCart = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Éxito',
+      text2: `${selectedProduct.nameProduct} agregado al carrito`
+    });
+    console.log('Agregado al carrito:', {
+      product: selectedProduct,
+      size: selectedSize,
+      quantity: quantity,
+      petName: petName
+    });
+  };
 
+  const buyNow = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Comprar',
+      text2: `Procesando compra de ${selectedProduct.nameProduct}`
+    });
+    console.log('Comprar ahora:', {
+      product: selectedProduct,
+      size: selectedSize,
+      quantity: quantity,
+      petName: petName
+    });
+  };
+
+  if (loading) {
     return (
-      <View style={styles.productsGrid}>
-        {filteredProducts.map((product) => (
-          <ProductCard
-            key={product._id}
-            product={product}
-            onPress={handleProductPress}
-          />
-        ))}
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={festivityColor} />
+          <Text style={styles.loadingText}>Cargando productos de {festivityName}...</Text>
+        </View>
+      </SafeAreaView>
     );
-  };
+  }
 
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error al cargar productos:</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadFestivityProducts}>
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Vista de lista de productos
+  if (currentView === 'list') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{festivityName}</Text>
+          <TouchableOpacity>
+            <Ionicons name="search" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+
+        {products.length === 0 ? (
+          <View style={styles.noProductsContainer}>
+            <Text style={styles.noProductsText}>No hay productos disponibles para {festivityName}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadFestivityProducts}>
+              <Text style={styles.retryButtonText}>Actualizar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+            {products.map((product) => (
+              <TouchableOpacity
+                key={product._id}
+                style={styles.productCard}
+                onPress={() => openProductDetail(product)}
+              >
+                <Image 
+                  source={{ uri: product.image }} 
+                  style={styles.productImage} 
+                  resizeMode="cover"
+                />
+                <Text style={styles.productTitle}>{product.nameProduct}</Text>
+                <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    );
+  }
+
+  // Vista de detalle del producto
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
-      {/* Header con barra de búsqueda */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
+        <TouchableOpacity onPress={goBackToList}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar productos..."
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholderTextColor="#666"
-          />
-          {searchText ? (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <Text style={styles.headerTitle}>Detalle del Producto</Text>
+        <View style={{ width: 24 }} />
       </View>
-      
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Banner de festividad */}
-        <View style={styles.bannerContainer}>
-          <View style={[styles.bannerContent, { backgroundColor: festivityConfig.color }]}>
-            <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>
-                {festivityConfig.emoji} {festivityConfig.name}
-              </Text>
-              <Text style={styles.bannerDescription}>
-                {festivityConfig.description}
-              </Text>
-              {!loading && filteredProducts.length > 0 && (
-                <View style={styles.productCountBadge}>
-                  <Text style={styles.productCountBadgeText}>
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.bannerImageContainer}>
-              <Image
-                source={{ 
-                  uri: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=200&h=200&fit=crop'
-                }}
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
-              <View style={styles.decorativeContainer}>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-              </View>
-            </View>
-          </View>
+
+      <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
+        {/* Imagen principal del producto */}
+        <View style={styles.mainImageContainer}>
+          <Image 
+            source={{ 
+              uri: selectedProduct?.designImages?.[selectedImageIndex] || selectedProduct?.image 
+            }} 
+            style={styles.mainImage} 
+            resizeMode="cover" 
+          />
         </View>
 
-        {/* Lista de productos */}
-        <View style={styles.productsContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              Productos disponibles
-            </Text>
+        {/* Imágenes pequeñas */}
+        {selectedProduct?.designImages && selectedProduct.designImages.length > 0 && (
+          <View style={styles.thumbnailContainer}>
+            {selectedProduct.designImages.map((image, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedImageIndex(index)}
+                style={[
+                  styles.thumbnailWrapper,
+                  selectedImageIndex === index && styles.selectedThumbnail
+                ]}
+              >
+                <Image 
+                  source={{ uri: image }} 
+                  style={styles.thumbnail} 
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Información del producto */}
+        <View style={styles.productInfo}>
+          <Text style={styles.detailTitle}>{selectedProduct?.nameProduct}</Text>
+          <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct?.price || 0).toFixed(2)}</Text>
+          
+          {/* Rating */}
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingNumber}>5.0</Text>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Ionicons
+                  key={star}
+                  name="star"
+                  size={16}
+                  color="#FFD700"
+                />
+              ))}
+            </View>
+            <Text style={styles.reviewsText}>(15 evaluaciones)</Text>
+          </View>
+
+          {/* Descripción */}
+          {selectedProduct?.description && (
+            <Text style={styles.description}>{selectedProduct.description}</Text>
+          )}
+
+          {/* Diseño (Colores) */}
+          <Text style={styles.sectionTitle}>Diseño</Text>
+          <View style={styles.colorsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.colorOption,
+                { backgroundColor: '#F5E6D3' },
+                selectedColor === 0 && styles.selectedColor
+              ]}
+              onPress={() => setSelectedColor(0)}
+            />
+            <TouchableOpacity
+              style={[
+                styles.colorOption,
+                { backgroundColor: '#FF7043' },
+                selectedColor === 1 && styles.selectedColor
+              ]}
+              onPress={() => setSelectedColor(1)}
+            />
+          </View>
+
+          {/* Talla */}
+          <Text style={styles.sectionTitle}>Talla</Text>
+          <View style={styles.sizesContainer}>
+            {['XS', 'S', 'M', 'L'].map((size) => (
+              <TouchableOpacity
+                key={size}
+                style={[
+                  styles.sizeOption,
+                  selectedSize === size && styles.selectedSize
+                ]}
+                onPress={() => setSelectedSize(size)}
+              >
+                <Text style={[
+                  styles.sizeText,
+                  selectedSize === size && styles.selectedSizeText
+                ]}>{size}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Guía de tallas */}
+          <TouchableOpacity 
+            style={styles.sizeGuide}
+            onPress={() => setShowSizeGuide(true)}
+          >
+            <Ionicons name="information-circle-outline" size={20} color="#666" />
+            <Text style={styles.sizeGuideText}>Guía de tallas</Text>
+          </TouchableOpacity>
+
+          {/* Modal para la guía de tallas */}
+          {showSizeGuide && (
+            <View style={styles.sizeGuideOverlay}>
+              <View style={styles.sizeGuideModal}>
+                <View style={styles.sizeGuideHeader}>
+                  <Text style={styles.sizeGuideTitle}>Guía de Tallas</Text>
+                  <TouchableOpacity onPress={() => setShowSizeGuide(false)}>
+                    <Ionicons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                <Image 
+                  source={require('../../../assets/Home/GuiaTallas.png')} 
+                  style={styles.sizeGuideImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Nombre del perrito */}
+          <View style={styles.nameContainer}>
+            <Text style={styles.sectionTitle}>Nombre</Text>
+            <TouchableOpacity 
+              style={styles.checkboxContainer}
+              onPress={() => setNameFieldEnabled(!nameFieldEnabled)}
+            >
+              <Ionicons 
+                name={nameFieldEnabled ? "checkbox" : "square-outline"} 
+                size={20} 
+                color={nameFieldEnabled ? "#4CAF50" : "#666"} 
+              />
+            </TouchableOpacity>
           </View>
           
-          {renderProductsContent()}
+          {nameFieldEnabled && (
+            <TextInput
+              style={styles.nameInput}
+              placeholder="Nombre De su Perrito"
+              value={petName}
+              onChangeText={setPetName}
+            />
+          )}
+
+          {/* Cantidad */}
+          <Text style={styles.sectionTitle}>Cantidad</Text>
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity 
+              style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]} 
+              onPress={decreaseQuantity}
+              disabled={quantity <= 1}
+            >
+              <Text style={[styles.quantityButtonText, quantity <= 1 && styles.quantityButtonTextDisabled]}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{quantity}</Text>
+            <TouchableOpacity 
+              style={[styles.quantityButton, quantity >= 5 && styles.quantityButtonDisabled]} 
+              onPress={increaseQuantity}
+              disabled={quantity >= 5}
+            >
+              <Text style={[styles.quantityButtonText, quantity >= 5 && styles.quantityButtonTextDisabled]}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Botones de acción con cantidad integrada */}
+      <View style={styles.actionButtons}>
+        <View style={styles.bottomQuantityContainer}>
+          <TouchableOpacity 
+            style={[styles.bottomQuantityButton, quantity <= 1 && styles.quantityButtonDisabled]} 
+            onPress={decreaseQuantity}
+            disabled={quantity <= 1}
+          >
+            <Text style={[styles.bottomQuantityButtonText, quantity <= 1 && styles.quantityButtonTextDisabled]}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.bottomQuantityText}>{quantity}</Text>
+          <TouchableOpacity 
+            style={[styles.bottomQuantityButton, quantity >= 5 && styles.quantityButtonDisabled]} 
+            onPress={increaseQuantity}
+            disabled={quantity >= 5}
+          >
+            <Text style={[styles.bottomQuantityButtonText, quantity >= 5 && styles.quantityButtonTextDisabled]}>+</Text>
+          </TouchableOpacity>
         </View>
         
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-      
-      {/* Navegación inferior */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => console.log('Categories')}>
-          <Ionicons name="grid" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => console.log('Cart')}>
-          <Ionicons name="bag" size={24} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity style={styles.addToCartButton} onPress={addToCart}>
+            <Text style={styles.addToCartText}>Añadir al carrito</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buyNowButton} onPress={buyNow}>
+            <Text style={styles.buyNowText}>Comprar ahora</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
   },
-  scrollContainer: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  scrollContent: {
-    paddingBottom: 80,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
-  
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#e74c3c',
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#2c5aa0',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   header: {
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    flexDirection: 'row',
-    alignItems: 'center',
   },
-  backButton: {
-    marginRight: 15,
-    padding: 5,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
   },
-  
-  bannerContainer: {
-    margin: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-    elevation: 5,
+  noProductsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noProductsText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  productsList: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  productCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    marginVertical: 10,
+    padding: 15,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  bannerContent: {
-    flexDirection: 'row',
-    padding: 20,
-    alignItems: 'center',
+  productImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  bannerTextContainer: {
-    flex: 1,
-    paddingRight: 15,
-  },
-  bannerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  bannerDescription: {
-    fontSize: 14,
-    color: '#fff',
-    lineHeight: 20,
-    opacity: 0.95,
-  },
-  productCountBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-  },
-  productCountBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  bannerImageContainer: {
-    position: 'relative',
-    alignItems: 'center',
-  },
-  bannerImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  decorativeContainer: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    flexDirection: 'row',
-    transform: [{ rotate: '15deg' }],
-  },
-  decorativeEmoji: {
+  productTitle: {
     fontSize: 16,
-    marginHorizontal: 2,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+    textAlign: 'center',
   },
-  
-  productsContainer: {
+  productPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c5aa0',
+    textAlign: 'center',
+  },
+  detailContainer: {
+    flex: 1,
+  },
+  mainImageContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  mainImage: {
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: 10,
+  },
+  thumbnailContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  thumbnailWrapper: {
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
+  thumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedThumbnail: {
+    borderColor: '#2c5aa0',
+  },
+  productInfo: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  detailTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  detailPrice: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c5aa0',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  ratingNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginRight: 5,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginRight: 10,
+  },
+  reviewsText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
     marginTop: 10,
   },
-  sectionHeader: {
+  colorsContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 15,
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  selectedColor: {
+    borderColor: '#333',
+  },
+  sizesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  sizeOption: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  selectedSize: {
+    backgroundColor: '#333',
+    borderColor: '#333',
+  },
+  sizeText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  selectedSizeText: {
+    color: '#FFF',
+  },
+  sizeGuide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sizeGuideText: {
+    color: '#666',
+    marginLeft: 5,
+    textDecorationLine: 'underline',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  checkboxContainer: {
+    padding: 5,
+  },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  sizeGuideOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: -20,
+    right: -20,
+    bottom: -100,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  sizeGuideModal: {
+    backgroundColor: '#FFF',
+    margin: 20,
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: '80%',
+    width: '90%',
+  },
+  sizeGuideHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  sectionTitle: {
-    fontSize: 20,
+  sizeGuideTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  productsGrid: {
-    flexDirection: 'column',
+  sizeGuideImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
   },
-  
-  loadingContainer: {
-    alignItems: 'center',
+  quantityContainer: {
+    flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  emptyEmoji: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  emptyDescription: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
     marginBottom: 20,
   },
-  clearSearchButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+  quantityButton: {
+    borderWidth: 1,
+    borderColor: '#2c5aa0',
+    borderRadius: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  clearSearchText: {
-    color: '#fff',
-    fontSize: 14,
+  quantityButtonDisabled: {
+    borderColor: '#ccc',
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    color: '#2c5aa0',
     fontWeight: 'bold',
   },
-  
-  bottomNav: {
+  quantityButtonTextDisabled: {
+    color: '#ccc',
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
+    color: '#333',
+  },
+  actionButtons: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
     paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
+  bottomQuantityContainer: {
+    flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: 5,
+    alignItems: 'center',
+    marginBottom: 15,
   },
-  
-  bottomSpacing: {
-    height: 20,
+  bottomQuantityButton: {
+    borderWidth: 1,
+    borderColor: '#2c5aa0',
+    borderRadius: 8,
+    width: 35,
+    height: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomQuantityButtonText: {
+    fontSize: 16,
+    color: '#2c5aa0',
+    fontWeight: 'bold',
+  },
+  bottomQuantityText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
+    color: '#333',
+  },
+  actionButtonsContainer: {
+    gap: 10,
+  },
+  addToCartButton: {
+    backgroundColor: '#FF9F43',
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  addToCartText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  buyNowButton: {
+    backgroundColor: '#FFB3D9',
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  buyNowText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
-
-export default FestivitiesScreen;
