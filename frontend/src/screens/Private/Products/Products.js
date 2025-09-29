@@ -5,6 +5,7 @@ import ActionButtons from '../../../components/Private/Product/ActionButton.js';
 import SearchBar from '../../../components/Private/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
 import CreateProductModal from '../../../components/Private/Product/CreateProductModal.js';
+import ProductDetailModal from '../../../components/Private/Product/ProductDetailModal.js';
 import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
 import Toast from 'react-native-toast-message';
 import { API_URL } from '../../../config';
@@ -14,6 +15,8 @@ const ProductosScreen = () => {
   const [loading, setLoading] = useState(false);
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [holidays, setHolidays] = useState([]);
 
@@ -120,9 +123,21 @@ const ProductosScreen = () => {
     setModalVisible(true);
   };
 
-  // Cerrar modal
+  // Cerrar modal de creación
   const handleCloseModal = () => {
     setModalVisible(false);
+  };
+
+  // Abrir modal de detalle
+  const handleProductPress = (product) => {
+    setSelectedProduct(product);
+    setDetailModalVisible(true);
+  };
+
+  // Cerrar modal de detalle
+  const handleCloseDetailModal = () => {
+    setDetailModalVisible(false);
+    setSelectedProduct(null);
   };
 
   // Crear producto
@@ -141,13 +156,10 @@ const ProductosScreen = () => {
         idHolidayProduct: productData.idHolidayProduct
       });
       
-      // El modal ya prepara los datos correctamente
-      // El hook handlePostProducts construirá el FormData
       await handlePostProducts(productData);
       
       console.log('✅ [SCREEN] Producto creado exitosamente');
       
-      // Cerrar modal y recargar productos
       handleCloseModal();
       await loadProducts();
       
@@ -157,6 +169,52 @@ const ProductosScreen = () => {
         type: 'error',
         text1: 'Error',
         text2: error.message || 'No se pudo crear el producto'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Editar producto
+  const handleEditProduct = (product) => {
+    handleCloseDetailModal();
+    // TODO: Abrir modal de edición con los datos del producto
+    Toast.show({
+      type: 'info',
+      text1: 'Editar Producto',
+      text2: 'Funcionalidad de edición próximamente'
+    });
+  };
+
+  // Eliminar producto
+  const handleDeleteProduct = async (productId) => {
+    try {
+      setLoading(true);
+      handleCloseDetailModal();
+      
+      // TODO: Implementar llamada al API para eliminar
+      const response = await fetch(`${API_URL}products/${productId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el producto');
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Éxito',
+        text2: 'Producto eliminado correctamente'
+      });
+
+      await loadProducts();
+      
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo eliminar el producto'
       });
     } finally {
       setLoading(false);
@@ -173,7 +231,12 @@ const ProductosScreen = () => {
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item._id?.toString() || item.id?.toString()}
-          renderItem={({ item }) => <ProductCard product={item} />}
+          renderItem={({ item }) => (
+            <ProductCard 
+              product={item} 
+              onPress={handleProductPress}
+            />
+          )}
           numColumns={2}
           columnWrapperStyle={filteredProducts.length > 0 ? styles.row : null}
           contentContainerStyle={styles.listContent}
@@ -201,6 +264,15 @@ const ProductosScreen = () => {
         categories={categories}
         festivities={holidays}
         loading={loading}
+      />
+
+      {/* Modal de detalle del producto */}
+      <ProductDetailModal
+        visible={detailModalVisible}
+        product={selectedProduct}
+        onClose={handleCloseDetailModal}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
       />
       
       {/* Toast para notificaciones */}
