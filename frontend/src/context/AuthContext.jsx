@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import useFetchLogin from "../hooks/Login/useFetchLogin";
-import { API_FETCH_JSON } from "../config";
-import Toast from "react-native-toast-message";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
+// CORREGIDO: Importación consistente con la exportación
+import useFetchLogin from '../hooks/Login/useFetchLogin'; 
+import { API_FETCH_JSON } from '../config';
 
 const AuthContext = createContext();
 
