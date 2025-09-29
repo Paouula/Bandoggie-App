@@ -18,26 +18,62 @@ import ProductCard from '../../components/ProductCard';
 
 const { width } = Dimensions.get('window');
 
+// Configuración de festividades con sus IDs
+const FESTIVITIES_CONFIG = {
+  '68a4ce2aa2099a968645d55f': {
+    name: 'Cumpleaños',
+    color: '#FF69B4',
+    emoji: '🎂',
+    description: 'Celebra el cumpleaños de tu mascota con estilo'
+  },
+  '68a4c746a2099a968645d546': {
+    name: 'Días Patrios',
+    color: '#0047AB',
+    emoji: '🎖️',
+    description: 'Viste a tu mascota con orgullo patrio'
+  },
+  '68a4b29c8ae388e19910c1fa': {
+    name: 'San Valentín',
+    color: '#FF1493',
+    emoji: '💕',
+    description: 'Amor y ternura para tu mascota especial'
+  },
+  '689555222515953c7bbe9f8f': {
+    name: 'Halloween',
+    color: '#FF6600',
+    emoji: '🎃',
+    description: 'Disfraces espeluznantes para tu mascota'
+  },
+  '68d2df3638119eb2888be34b': {
+    name: 'Navidad',
+    color: '#C41E3A',
+    emoji: '🎄',
+    description: 'Magia navideña para tu compañero peludo'
+  }
+};
+
 const FestivitiesScreen = ({ navigation, route }) => {
   const [searchText, setSearchText] = useState('');
   const [festivityProducts, setFestivityProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Hook para obtener productos
   const { handleGetProducts } = useFetchProducts();
   
-  // Recibir parámetros desde el HomeScreen (con valores por defecto)
-  const festivityName = route?.params?.festivityName || 'Navidad';
-  const HolidaysId = route?.params?.HolidaysId || '689555222515953c7bbe9f8f';
-  const festivityColor = route?.params?.festivityColor || '#FF6B6B';
+  // Obtener configuración de la festividad actual
+  const HolidaysId = route?.params?.HolidaysId || '68d2df3638119eb2888be34b';
+  const festivityConfig = FESTIVITIES_CONFIG[HolidaysId] || {
+    name: 'Festividad',
+    color: '#FF6B6B',
+    emoji: '🎉',
+    description: 'Productos especiales para tu mascota'
+  };
 
   useEffect(() => {
     loadFestivityProducts();
   }, [HolidaysId]);
 
   useEffect(() => {
-    // Filtrar productos basado en el texto de búsqueda
     if (searchText.trim() === '') {
       setFilteredProducts(festivityProducts);
     } else {
@@ -53,32 +89,30 @@ const FestivitiesScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const allProducts = await handleGetProducts();
-      console.log(allProducts, ' //n prueba de datos')
       
-      console.log('Todos los productos recibidos:', allProducts);
+      console.log('Todos los productos recibidos:', allProducts?.length || 0);
       console.log('ID de festividad a buscar:', HolidaysId);
+      console.log('Nombre de festividad:', festivityConfig.name);
       
       if (allProducts && Array.isArray(allProducts)) {
-        // Debug: ver estructura de los primeros productos
-        if (allProducts.length > 0) {
-          console.log('Estructura del primer producto:', allProducts[0]);
-          console.log('Campo idHolidayProduct:', allProducts[0].idHolidayProduct);
-        }
-        
         // Filtrar productos por festividad
         const filteredByFestivity = allProducts.filter(product => {
-          // Comparar por ID de festividad
           const productHolidayId = product.idHolidayProduct?._id || product.idHolidayProduct;
+          
+          // Log para debugging
+          if (productHolidayId) {
+            console.log(`Producto: ${product.nameProduct}, Holiday ID: ${productHolidayId}`);
+          }
+          
           return productHolidayId === HolidaysId;
         });
 
-        console.log(filteredByFestivity, ' \\n  Valores filtrados: ')
-        console.log('Productos filtrados:', filteredByFestivity);
+        console.log(`Productos encontrados para ${festivityConfig.name}:`, filteredByFestivity.length);
         
         setFestivityProducts(filteredByFestivity);
         setFilteredProducts(filteredByFestivity);
       } else {
-        console.warn('No se recibieron productos válidos:', allProducts);
+        console.warn('No se recibieron productos válidos');
         setFestivityProducts([]);
         setFilteredProducts([]);
       }
@@ -93,6 +127,8 @@ const FestivitiesScreen = ({ navigation, route }) => {
 
   const handleProductPress = (product) => {
     console.log('Producto seleccionado:', product.nameProduct);
+    // Navegar a detalle del producto si tienes esa pantalla
+    // navigation.navigate('ProductDetail', { product });
   };
 
   const handleSearch = (text) => {
@@ -111,7 +147,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={festivityColor} />
+          <ActivityIndicator size="large" color={festivityConfig.color} />
           <Text style={styles.loadingText}>Cargando productos...</Text>
         </View>
       );
@@ -120,19 +156,19 @@ const FestivitiesScreen = ({ navigation, route }) => {
     if (filteredProducts.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <Ionicons name="basket-outline" size={60} color="#ccc" />
+          <Text style={styles.emptyEmoji}>{festivityConfig.emoji}</Text>
           <Text style={styles.emptyTitle}>
             {searchText ? 'Sin resultados' : 'Sin productos'}
           </Text>
           <Text style={styles.emptyDescription}>
             {searchText 
               ? `No encontramos productos que coincidan con "${searchText}"`
-              : `Aún no hay productos disponibles para ${festivityName}`
+              : `Aún no hay productos disponibles para ${festivityConfig.name}`
             }
           </Text>
           {searchText && (
             <TouchableOpacity 
-              style={styles.clearSearchButton}
+              style={[styles.clearSearchButton, { backgroundColor: festivityConfig.color }]}
               onPress={() => setSearchText('')}
             >
               <Text style={styles.clearSearchText}>Limpiar búsqueda</Text>
@@ -191,17 +227,26 @@ const FestivitiesScreen = ({ navigation, route }) => {
       >
         {/* Banner de festividad */}
         <View style={styles.bannerContainer}>
-          <View style={[styles.bannerContent, { backgroundColor: festivityColor }]}>
+          <View style={[styles.bannerContent, { backgroundColor: festivityConfig.color }]}>
             <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>{festivityName}</Text>
-              <Text style={styles.bannerDescription}>
-                Lindas y hermosas prendas para que tu mascota esté perfecta en {festivityName.toLowerCase()}
+              <Text style={styles.bannerTitle}>
+                {festivityConfig.emoji} {festivityConfig.name}
               </Text>
+              <Text style={styles.bannerDescription}>
+                {festivityConfig.description}
+              </Text>
+              {!loading && filteredProducts.length > 0 && (
+                <View style={styles.productCountBadge}>
+                  <Text style={styles.productCountBadgeText}>
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={styles.bannerImageContainer}>
               <Image
                 source={{ 
-                  uri: 'https://images.unsplash.com/photo-1512546148165-e50d714a565a?w=200&h=200&fit=crop&crop=face'
+                  uri: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=200&h=200&fit=crop'
                 }}
                 style={styles.bannerImage}
                 resizeMode="cover"
@@ -219,22 +264,13 @@ const FestivitiesScreen = ({ navigation, route }) => {
         <View style={styles.productsContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              Productos de {festivityName}
-              {!loading && filteredProducts.length > 0 && (
-                <Text style={styles.productCount}> ({filteredProducts.length})</Text>
-              )}
+              Productos disponibles
             </Text>
-            {!loading && filteredProducts.length > 0 && (
-              <TouchableOpacity onPress={() => console.log('Ver todos')}>
-                <Text style={styles.seeAllText}>Ver todos</Text>
-              </TouchableOpacity>
-            )}
           </View>
           
           {renderProductsContent()}
         </View>
         
-        {/* Espaciado para la navegación inferior */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
       
@@ -245,7 +281,7 @@ const FestivitiesScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => console.log('Categories')}>
           <Ionicons name="grid" size={24} color="#666" />
-        </TouchableOpacity> 
+        </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => console.log('Cart')}>
           <Ionicons name="bag" size={24} color="#666" />
         </TouchableOpacity>
@@ -266,7 +302,6 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   
-  // Header styles
   header: {
     backgroundColor: '#fff',
     paddingHorizontal: 20,
@@ -298,7 +333,6 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   
-  // Banner styles
   bannerContainer: {
     margin: 20,
     borderRadius: 20,
@@ -319,7 +353,7 @@ const styles = StyleSheet.create({
     paddingRight: 15,
   },
   bannerTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
@@ -328,20 +362,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     lineHeight: 20,
-    marginBottom: 15,
-    opacity: 0.9,
+    opacity: 0.95,
   },
-  shopButton: {
-    backgroundColor: '#FFA500',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+  productCountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
     alignSelf: 'flex-start',
+    marginTop: 10,
   },
-  shopButtonText: {
+  productCountBadgeText: {
     color: '#fff',
+    fontSize: 12,
     fontWeight: 'bold',
-    fontSize: 14,
   },
   bannerImageContainer: {
     position: 'relative',
@@ -366,7 +400,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   
-  // Products section styles
   productsContainer: {
     paddingHorizontal: 20,
     marginTop: 10,
@@ -382,53 +415,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  productCount: {
-    fontSize: 16,
-    fontWeight: 'normal',
-    color: '#666',
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#FFA500',
-    fontWeight: '600',
-  },
   productsGrid: {
     flexDirection: 'column',
   },
   
-  // Product card styles
-  productCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    marginBottom: 15,
-  },
-  productImage: {
-    width: '100%',
-    height: 200,
-  },
-  productInfo: {
-    padding: 15,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-  },
-  
-  // Loading and empty states
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -446,11 +436,15 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     paddingHorizontal: 40,
   },
+  emptyEmoji: {
+    fontSize: 60,
+    marginBottom: 10,
+  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 10,
   },
   emptyDescription: {
@@ -461,7 +455,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   clearSearchButton: {
-    backgroundColor: '#FFA500',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
@@ -472,7 +465,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   
-  // Bottom navigation styles
   bottomNav: {
     position: 'absolute',
     bottom: 0,
@@ -497,7 +489,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   
-  // Utility styles
   bottomSpacing: {
     height: 20,
   },
