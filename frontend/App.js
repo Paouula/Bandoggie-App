@@ -28,7 +28,7 @@ function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
-      <AuthStack.Screen name="ChooseAccount" component={ChooseScreen} />
+      <AuthStack.Screen name="Choose" component={ChooseScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="RegisterVet" component={RegisterVetScreen} />
       <AuthStack.Screen 

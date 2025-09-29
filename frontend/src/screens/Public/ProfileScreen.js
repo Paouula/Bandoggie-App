@@ -1,10 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import 'react-native-gesture-handler';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = ({ navigation }) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Datos simulados mientras no tengas el AuthContext configurado
+  const user = {
+    name: "Mirian Morales",
+    email: "mirianmorales@gmail.com"
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que deseas cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cerrar Sesión',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoggingOut(true);
+            try {
+              // Limpiar AsyncStorage
+              await AsyncStorage.removeItem('user');
+              await AsyncStorage.removeItem('verificationInfo');
+              await AsyncStorage.removeItem('authToken');
+              
+              console.log('Sesión cerrada correctamente');
+              
+              // Navegar a la pantalla de login
+              // Asegúrate de que 'Login' sea el nombre correcto de tu pantalla
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Error al cerrar sesión:', error);
+              Alert.alert('Error', 'No se pudo cerrar la sesión. Por favor, intenta de nuevo.');
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <View style={styles.container}>
+      {isLoggingOut && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF9C46" />
+            <Text style={styles.loadingText}>Cerrando sesión...</Text>
+          </View>
+        </View>
+      )}
+      
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -23,14 +82,14 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.label}>Nombre</Text>
             <TextInput
               style={styles.input}
-              value="Mirian Morales"
+              value={user?.name || "Mirian Morales"}
               editable={false}
             />
 
             <Text style={styles.label}>Correo Electrónico</Text>
             <TextInput
               style={styles.input}
-              value="mirianmorales@gmail.com"
+              value={user?.email || "mirianmorales@gmail.com"}
               editable={false}
             />
 
@@ -100,6 +159,21 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.menuItem, styles.logoutButton]}
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <View style={styles.menuItemLeft}>
+              <Text style={styles.logoutText}>Cerrar Sesión</Text>
+            </View>
+            {isLoggingOut ? (
+              <ActivityIndicator size="small" color="#FF4444" />
+            ) : (
+              <Text style={styles.menuArrow}>›</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -112,6 +186,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ECF2FA',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    minWidth: 200,
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#333333',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -237,5 +335,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#CCCCCC',
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    borderWidth: 1,
+    borderColor: '#FF4444',
+    backgroundColor: '#FFF5F5',
+  },
+  logoutText: {
+    fontSize: 16,
+    color: '#FF4444',
+    fontWeight: '600',
+    flex: 1,
   },
 });

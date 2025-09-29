@@ -22,8 +22,9 @@ const useFetchResend = () => {
       Toast.show({
         type: 'error',
         text1: 'Error al reenviar',
-        text2: error.message || 'Intenta nuevamente',
+        text2: error.message,
       });
+
       throw error;
     }
   };

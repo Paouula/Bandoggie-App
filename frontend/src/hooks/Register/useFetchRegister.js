@@ -16,10 +16,6 @@ const useFetchRegister = () => {
         formData.append('image', image);
       }
 
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1]);
-      }
-
       const data = await API_FETCH_FORM(endpoint, formData, {
         method: 'POST',
       });
@@ -34,9 +30,10 @@ const useFetchRegister = () => {
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: 'Error al registrar',
+        text1: 'Error en el registro',
         text2: error.message || 'Intenta nuevamente',
       });
+
       throw error;
     }
   };
@@ -52,8 +49,8 @@ const useFetchRegister = () => {
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: 'Error al verificar correo',
-        text2: error.message || 'Código inválido o expirado',
+        text1: 'Error al verificar el correo',
+        text2: error.message || 'Intenta nuevamente',
       });
     }
   };
