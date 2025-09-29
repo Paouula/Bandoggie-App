@@ -31,4 +31,6 @@ const useFetchLogin = () => {
     return { handleLogin };
 }
 
+// CAMBIO IMPORTANTE: Exportación como named export
+export { useFetchLogin };
 export default useFetchLogin;

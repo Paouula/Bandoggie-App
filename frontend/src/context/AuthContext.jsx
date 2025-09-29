@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import { useFetchLogin } from '../hooks/Login/useFetchLogin'; // Ajusta la ruta según tu estructura
-import { API_FETCH_JSON } from '../config'; // Ajusta la ruta según tu estructura
+// CORREGIDO: Importación consistente con la exportación
+import useFetchLogin from '../hooks/Login/useFetchLogin'; 
+import { API_FETCH_JSON } from '../config';
 
 const AuthContext = createContext();
 

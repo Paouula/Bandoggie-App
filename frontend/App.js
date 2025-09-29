@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts, BalooBhaijaan2_400Regular, BalooBhaijaan2_700Bold } from '@expo-google-fonts/baloo-bhaijaan-2';
-
+import { AuthProvider } from './src/context/AuthContext';
 import DrawerNavigation from './src/navigation/DrawerNavigation';
 import BandoggieSplashScreen from './src/components/SplashScreen';
 
@@ -51,7 +51,9 @@ export default function App() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
-        <DrawerNavigation />
+        <AuthProvider>
+          <DrawerNavigation />
+        </AuthProvider>
       </NavigationContainer>
     </View>
   );
