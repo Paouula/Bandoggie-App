@@ -7,23 +7,21 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import useFetchProducts from '../../hooks/Products/useFetchProducts.js'; // Ajusta la ruta según tu estructura
+import Toast from 'react-native-toast-message';
+import useFetchProducts from '../../hooks/Products/useFetchProducts.js';
+import useFetchCategory from '../../hooks/Products/useFetchCategory.js';
 
 const { width } = Dimensions.get('window');
 
 export default function BandanasScreen({ navigation }) {
-  const { 
-    products, 
-    loading, 
-    error, 
-    refetch
-  } = useFetchProducts();
+  const { handleGetProducts } = useFetchProducts();
+  const { findCategoryIdByName } = useFetchCategory();
   
   const [currentView, setCurrentView] = useState('list');
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -34,21 +32,37 @@ export default function BandanasScreen({ navigation }) {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Función para filtrar productos por tipo
-  const filterProductsByType = (type) => {
-    if (!products || !Array.isArray(products)) return [];
-    return products.filter(product => 
-      product.category?.toLowerCase() === type.toLowerCase() ||
-      product.type?.toLowerCase() === type.toLowerCase() ||
-      product.productType?.toLowerCase() === type.toLowerCase()
-    );
+  useEffect(() => {
+    loadBandanasProducts();
+  }, []);
+
+  const loadBandanasProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Obtener todos los productos
+      const allProducts = await handleGetProducts();
+      
+      // Filtrar productos que contengan "bandana" en el nombre o categoría
+      const bandanasProducts = allProducts.filter(product => {
+        const name = product.nameProduct?.toLowerCase() || '';
+        const categoryName = product.categoryName?.toLowerCase() || '';
+        return name.includes('bandana') || categoryName.includes('bandana');
+      });
+      
+      setProducts(bandanasProducts);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading bandanas:', err);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  // Filtrar productos de bandanas - con verificación adicional
-  const bandanasProducts = React.useMemo(() => {
-    return filterProductsByType('bandanas');
-  }, [products]);
 
   const openProductDetail = (product) => {
     setSelectedProduct(product);
@@ -74,7 +88,11 @@ export default function BandanasScreen({ navigation }) {
   };
 
   const addToCart = () => {
-    Alert.alert('Éxito', `${selectedProduct.nameProduct} agregado al carrito`);
+    Toast.show({
+      type: 'success',
+      text1: 'Éxito',
+      text2: `${selectedProduct.nameProduct} agregado al carrito`
+    });
     console.log('Agregado al carrito:', {
       product: selectedProduct,
       size: selectedSize,
@@ -84,7 +102,11 @@ export default function BandanasScreen({ navigation }) {
   };
 
   const buyNow = () => {
-    Alert.alert('Comprar', `Procesando compra de ${selectedProduct.nameProduct}`);
+    Toast.show({
+      type: 'success',
+      text1: 'Comprar',
+      text2: `Procesando compra de ${selectedProduct.nameProduct}`
+    });
     console.log('Comprar ahora:', {
       product: selectedProduct,
       size: selectedSize,
@@ -110,7 +132,7 @@ export default function BandanasScreen({ navigation }) {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error al cargar bandanas:</Text>
           <Text style={styles.errorMessage}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+          <TouchableOpacity style={styles.retryButton} onPress={loadBandanasProducts}>
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
         </View>
@@ -126,22 +148,22 @@ export default function BandanasScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Productos</Text>
+          <Text style={styles.headerTitle}>Bandanas</Text>
           <TouchableOpacity>
             <Ionicons name="search" size={24} color="#333" />
           </TouchableOpacity>
         </View>
 
-        {bandanasProducts.length === 0 ? (
+        {products.length === 0 ? (
           <View style={styles.noProductsContainer}>
             <Text style={styles.noProductsText}>No hay bandanas disponibles</Text>
-            <Text style={styles.debugText}>
-              Total productos: {products?.length || 0} | Bandanas: {bandanasProducts.length}
-            </Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadBandanasProducts}>
+              <Text style={styles.retryButtonText}>Actualizar</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-            {bandanasProducts.map((product) => (
+            {products.map((product) => (
               <TouchableOpacity
                 key={product._id}
                 style={styles.productCard}
@@ -212,7 +234,7 @@ export default function BandanasScreen({ navigation }) {
           <Text style={styles.detailTitle}>{selectedProduct?.nameProduct}</Text>
           <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct?.price || 0).toFixed(2)}</Text>
           
-          {/* Rating (puedes agregar esto en tu backend más adelante) */}
+          {/* Rating */}
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingNumber}>5.0</Text>
             <View style={styles.starsContainer}>
@@ -233,6 +255,27 @@ export default function BandanasScreen({ navigation }) {
             <Text style={styles.description}>{selectedProduct.description}</Text>
           )}
 
+          {/* Diseño (Colores) */}
+          <Text style={styles.sectionTitle}>Diseño</Text>
+          <View style={styles.colorsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.colorOption,
+                { backgroundColor: '#F5E6D3' },
+                selectedColor === 0 && styles.selectedColor
+              ]}
+              onPress={() => setSelectedColor(0)}
+            />
+            <TouchableOpacity
+              style={[
+                styles.colorOption,
+                { backgroundColor: '#FF7043' },
+                selectedColor === 1 && styles.selectedColor
+              ]}
+              onPress={() => setSelectedColor(1)}
+            />
+          </View>
+
           {/* Talla */}
           <Text style={styles.sectionTitle}>Talla</Text>
           <View style={styles.sizesContainer}>
@@ -252,6 +295,58 @@ export default function BandanasScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Guía de tallas */}
+          <TouchableOpacity 
+            style={styles.sizeGuide}
+            onPress={() => setShowSizeGuide(true)}
+          >
+            <Ionicons name="information-circle-outline" size={20} color="#666" />
+            <Text style={styles.sizeGuideText}>Guía de tallas</Text>
+          </TouchableOpacity>
+
+          {/* Modal/Overlay para la guía de tallas */}
+          {showSizeGuide && (
+            <View style={styles.sizeGuideOverlay}>
+              <View style={styles.sizeGuideModal}>
+                <View style={styles.sizeGuideHeader}>
+                  <Text style={styles.sizeGuideTitle}>Guía de Tallas</Text>
+                  <TouchableOpacity onPress={() => setShowSizeGuide(false)}>
+                    <Ionicons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                <Image 
+                  source={require('../../../assets/Home/GuiaTallas.png')} 
+                  style={styles.sizeGuideImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Nombre del perrito */}
+          <View style={styles.nameContainer}>
+            <Text style={styles.sectionTitle}>Nombre</Text>
+            <TouchableOpacity 
+              style={styles.checkboxContainer}
+              onPress={() => setNameFieldEnabled(!nameFieldEnabled)}
+            >
+              <Ionicons 
+                name={nameFieldEnabled ? "checkbox" : "square-outline"} 
+                size={20} 
+                color={nameFieldEnabled ? "#4CAF50" : "#666"} 
+              />
+            </TouchableOpacity>
+          </View>
+          
+          {nameFieldEnabled && (
+            <TextInput
+              style={styles.nameInput}
+              placeholder="Nombre De su Perrito"
+              value={petName}
+              onChangeText={setPetName}
+            />
+          )}
 
           {/* Cantidad */}
           <Text style={styles.sectionTitle}>Cantidad</Text>
@@ -364,25 +459,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cartIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 15,
-    backgroundColor: '#2c5aa0',
-    borderRadius: 15,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  cartCount: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginRight: 5,
-  },
   noProductsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -393,11 +469,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 10,
+    marginBottom: 20,
   },
   productsList: {
     flex: 1,
@@ -426,18 +498,6 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 5,
     textAlign: 'center',
-  },
-  productCategory: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  productHoliday: {
-    fontSize: 12,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 5,
   },
   productPrice: {
     fontSize: 18,
@@ -527,6 +587,110 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
+    marginTop: 10,
+  },
+  colorsContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 15,
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  selectedColor: {
+    borderColor: '#333',
+  },
+  sizesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  sizeOption: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  selectedSize: {
+    backgroundColor: '#333',
+    borderColor: '#333',
+  },
+  sizeText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  selectedSizeText: {
+    color: '#FFF',
+  },
+  sizeGuide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sizeGuideText: {
+    color: '#666',
+    marginLeft: 5,
+    textDecorationLine: 'underline',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  checkboxContainer: {
+    padding: 5,
+  },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  sizeGuideOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: -20,
+    right: -20,
+    bottom: -100,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  sizeGuideModal: {
+    backgroundColor: '#FFF',
+    margin: 20,
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: '80%',
+    width: '90%',
+  },
+  sizeGuideHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sizeGuideTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sizeGuideImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
   },
   sizesContainer: {
     flexDirection: 'row',

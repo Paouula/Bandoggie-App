@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   BackHandler,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -213,7 +214,10 @@ const VerificationCodeScreen = () => {
           style={styles.keyboardView}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View style={styles.content}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.logoContainer}>
               <Image
                 source={require("../../../assets/LogoBandoggie.png")}
@@ -242,7 +246,15 @@ const VerificationCodeScreen = () => {
               })}
               style={styles.submitButton}
             />
-          </View>
+
+            <View style={styles.decorationContainer}>
+              <View style={styles.decorationGradient}>
+                <View style={styles.gradientSection1} />
+                <View style={styles.gradientSection2} />
+                <View style={styles.gradientSection3} />
+              </View>
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     );
@@ -254,7 +266,10 @@ const VerificationCodeScreen = () => {
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.logoContainer}>
             <Image
               source={require("../../../assets/LogoBandoggie.png")}
@@ -286,38 +301,49 @@ const VerificationCodeScreen = () => {
             />
           </View>
 
-          {/* Botón de envío */}
-          <ButtonComponent
-            title={isSubmitting ? "Verificando..." : "Verificar"}
-            onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
-            disabled={isSubmitting || verificationCode.length < 6}
-            style={styles.submitButton}
-          />
+          {/* Formulario */}
+          <View style={styles.form}>
+            {/* Botón de envío */}
+            <ButtonComponent
+              title={isSubmitting ? "Verificando..." : "Verificar"}
+              onPress={handleSubmit(onSubmit)}
+              loading={isSubmitting}
+              disabled={isSubmitting || verificationCode.length < 6}
+              style={styles.submitButton}
+            />
 
-          {/* Link para reenviar código */}
-          <TouchableOpacity
-            onPress={!isResending ? handleResendCode : undefined}
-            disabled={isResending}
-            style={[styles.resendContainer, isResending && styles.disabledResend]}
-          >
-            <Text style={[styles.resendText, isResending && styles.disabledText]}>
-              {isResending
-                ? `Espera ${resendCountdown} segundos para reenviar`
-                : "Reenviar código"}
-            </Text>
-          </TouchableOpacity>
+            {/* Link para reenviar código */}
+            <TouchableOpacity
+              onPress={!isResending ? handleResendCode : undefined}
+              disabled={isResending}
+              style={[styles.resendContainer, isResending && styles.disabledResend]}
+            >
+              <Text style={[styles.resendText, isResending && styles.disabledText]}>
+                {isResending
+                  ? `Espera ${resendCountdown} segundos para reenviar`
+                  : "Reenviar código"}
+              </Text>
+            </TouchableOpacity>
 
-          {/* Botón para cancelar registro */}
-          <TouchableOpacity
-            onPress={handleCancelRegistration}
-            style={styles.cancelContainer}
-          >
-            <Text style={styles.cancelText}>
-              Cancelar registro
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Botón para cancelar registro */}
+            <TouchableOpacity
+              onPress={handleCancelRegistration}
+              style={styles.cancelContainer}
+            >
+              <Text style={styles.cancelText}>
+                Cancelar registro
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.decorationContainer}>
+            <View style={styles.decorationGradient}>
+              <View style={styles.gradientSection1} />
+              <View style={styles.gradientSection2} />
+              <View style={styles.gradientSection3} />
+            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -331,34 +357,40 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
-    justifyContent: "center",
+    paddingTop: 20,
+    paddingBottom: 30,
   },
   logoContainer: {
     alignItems: "center",
     marginBottom: 20,
   },
   logo: {
-    width: 120,
-    height: 80,
+    width: 130,
+    height: 50,
+    maxWidth: 130,
   },
   separator: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginHorizontal: 20,
-    marginBottom: 40,
+    height: 2,
+    backgroundColor: "#b4ceec",
+    marginHorizontal: 0,
+    marginVertical: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
-    color: "#333",
+    marginTop: 10,
+    marginBottom: 20,
+    color: "#365a7d",
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
   infoContainer: {
-    marginBottom: 40,
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
   infoText: {
     fontSize: 16,
@@ -366,10 +398,11 @@ const styles = StyleSheet.create({
     color: "#666",
     lineHeight: 22,
     marginBottom: 10,
+    paddingHorizontal: 10,
   },
   emailText: {
     fontWeight: "bold",
-    color: "#333",
+    color: "#365a7d",
   },
   roleText: {
     fontSize: 12,
@@ -377,9 +410,15 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   codeContainer: {
+    marginBottom: 30,
+    paddingHorizontal: 10,
+  },
+  form: {
+    alignItems: "stretch",
     marginBottom: 40,
   },
   submitButton: {
+    marginTop: 15,
     marginBottom: 20,
   },
   resendContainer: {
@@ -389,7 +428,7 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#ff9900",
     textDecorationLine: "underline",
   },
   disabledResend: {
@@ -419,6 +458,30 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginBottom: 30,
+  },
+  decorationContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    overflow: "hidden",
+  },
+  decorationGradient: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  gradientSection1: {
+    flex: 1,
+    backgroundColor: "#f7c7de",
+  },
+  gradientSection2: {
+    flex: 1,
+    backgroundColor: "#d9f4ff",
+  },
+  gradientSection3: {
+    flex: 1,
+    backgroundColor: "#b4ceec",
   },
 });
 

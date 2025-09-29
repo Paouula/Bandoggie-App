@@ -7,17 +7,15 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  SafeAreaView,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import useFetchProductsByCategory from '../../hooks/Products/useFetchByCategory.js';
+import Toast from 'react-native-toast-message';
+import useFetchProducts from '../../hooks/Products/useFetchProducts.js';
 
 const { width } = Dimensions.get('window');
-
-// ID de la categoría para Collares (debes ajustar este valor según tu base de datos)
-const COLLARS_CATEGORY_ID = 'ID_DE_CATEGORIA_COLLARES'; // Reemplaza con el ID real
 
 export default function CollarScreen({ navigation }) {
   const [currentView, setCurrentView] = useState('list');
@@ -31,20 +29,33 @@ export default function CollarScreen({ navigation }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { handleGetProductsByCategory } = useFetchProductsByCategory();
+  const { handleGetProducts } = useFetchProducts();
 
   useEffect(() => {
-    loadProducts();
+    loadCollarsProducts();
   }, []);
 
-  const loadProducts = async () => {
+  const loadCollarsProducts = async () => {
     try {
       setLoading(true);
-      const productsData = await handleGetProductsByCategory(COLLARS_CATEGORY_ID);
-      setProducts(productsData);
-    } catch (error) {
-      console.error('Error loading products:', error);
+      setError(null);
+      
+      // Obtener todos los productos
+      const allProducts = await handleGetProducts();
+      
+      // Filtrar productos que contengan "collar" en el nombre o categoría
+      const collarsProducts = allProducts.filter(product => {
+        const name = product.nameProduct?.toLowerCase() || '';
+        const categoryName = product.categoryName?.toLowerCase() || '';
+        return name.includes('collar') || categoryName.includes('collar');
+      });
+      
+      setProducts(collarsProducts);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading collars:', err);
     } finally {
       setLoading(false);
     }
@@ -56,15 +67,15 @@ export default function CollarScreen({ navigation }) {
       id: product._id,
       title: product.nameProduct,
       price: product.price,
-      image: { uri: product.image }, // Imagen principal desde Cloudinary
-      rating: 5.0, // Valor por defecto ya que no tienes rating en el modelo
-      reviews: 15, // Valor por defecto
+      image: { uri: product.image },
+      rating: 5.0,
+      reviews: 15,
       description: product.description,
       colors: [
-        { name: 'Color 1', color: '#F5E6D3' }, // Colores por defecto
+        { name: 'Color 1', color: '#F5E6D3' },
         { name: 'Color 2', color: '#FF7043' }
       ],
-      sizes: ['XS', 'S', 'M', 'L'], // Tallas por defecto
+      sizes: ['XS', 'S', 'M', 'L'],
       images: product.designImages ? product.designImages.map(url => ({ uri: url })) : [{ uri: product.image }],
       category: product.idCategory,
       holiday: product.idHolidayProduct
@@ -96,25 +107,19 @@ export default function CollarScreen({ navigation }) {
   };
 
   const addToCart = () => {
-    console.log('Agregado al carrito:', {
-      product: selectedProduct,
-      color: selectedProduct.colors[selectedColor],
-      size: selectedSize,
-      quantity: quantity,
-      petName: petName
+    Toast.show({
+      type: 'success',
+      text1: 'Éxito',
+      text2: `${selectedProduct.title} agregado al carrito`
     });
-    // Aquí puedes agregar la lógica para añadir al carrito
   };
 
   const buyNow = () => {
-    console.log('Comprar ahora:', {
-      product: selectedProduct,
-      color: selectedProduct.colors[selectedColor],
-      size: selectedSize,
-      quantity: quantity,
-      petName: petName
+    Toast.show({
+      type: 'success',
+      text1: 'Comprar',
+      text2: `Procesando compra de ${selectedProduct.title}`
     });
-    // Aquí puedes agregar la lógica para comprar directamente
   };
 
   // Vista de lista de productos
@@ -136,29 +141,38 @@ export default function CollarScreen({ navigation }) {
             <ActivityIndicator size="large" color="#FF9F43" />
             <Text style={styles.loadingText}>Cargando productos...</Text>
           </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Error al cargar collares</Text>
+            <Text style={styles.errorMessage}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadCollarsProducts}>
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : products.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No hay collares disponibles</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadCollarsProducts}>
+              <Text style={styles.retryButtonText}>Actualizar</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-            {products.length > 0 ? (
-              products.map((product) => (
-                <TouchableOpacity
-                  key={product._id}
-                  style={styles.productCard}
-                  onPress={() => openProductDetail(product)}
-                >
-                  <Image 
-                    source={{ uri: product.image }} 
-                    style={styles.productImage} 
-                    resizeMode="cover" 
-                  />
-                  <Text style={styles.productTitle}>{product.nameProduct}</Text>
-                  <Text style={styles.productPrice}>Desde ${product.price.toFixed(2)}</Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No hay productos disponibles en esta categoría</Text>
-              </View>
-            )}
+            {products.map((product) => (
+              <TouchableOpacity
+                key={product._id}
+                style={styles.productCard}
+                onPress={() => openProductDetail(product)}
+              >
+                <Image 
+                  source={{ uri: product.image }} 
+                  style={styles.productImage} 
+                  resizeMode="cover" 
+                />
+                <Text style={styles.productTitle}>{product.nameProduct}</Text>
+                <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -209,7 +223,7 @@ export default function CollarScreen({ navigation }) {
         {/* Información del producto */}
         <View style={styles.productInfo}>
           <Text style={styles.detailTitle}>{selectedProduct.title}</Text>
-          <Text style={styles.detailPrice}>Desde ${selectedProduct.price.toFixed(2)}</Text>
+          <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct.price).toFixed(2)}</Text>
           
           {/* Rating */}
           <View style={styles.ratingContainer}>
@@ -392,8 +406,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  
-  // Estilos para loading
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -404,8 +416,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  
-  // Estilos para estado vacío
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#e74c3c',
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#FF9F43',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -416,9 +453,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginBottom: 20,
   },
-  
-  // Estilos para la lista de productos
   productsList: {
     flex: 1,
     paddingHorizontal: 20,
@@ -453,8 +489,6 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-
-  // Estilos para el detalle del producto
   detailContainer: {
     flex: 1,
   },
@@ -473,11 +507,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
   },
+  thumbnailWrapper: {
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
   thumbnail: {
     width: 60,
     height: 60,
     borderRadius: 8,
-    marginHorizontal: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedThumbnail: {
+    borderColor: '#333',
   },
   productInfo: {
     paddingHorizontal: 20,
@@ -594,8 +636,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 10,
   },
-  
-  // Estilos para la guía de tallas
   sizeGuideOverlay: {
     position: 'absolute',
     top: 0,
@@ -660,8 +700,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginHorizontal: 20,
   },
-  
-  // Botones de acción
   actionButtons: {
     position: 'absolute',
     bottom: 0,
@@ -701,12 +739,13 @@ const styles = StyleSheet.create({
     minWidth: 30,
     textAlign: 'center',
   },
-
+  actionButtonsContainer: {
+    gap: 10,
+  },
   addToCartButton: {
     backgroundColor: '#FF9F43',
     paddingVertical: 15,
     borderRadius: 25,
-    marginBottom: 10,
   },
   addToCartText: {
     color: '#FFF',
