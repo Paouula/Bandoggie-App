@@ -321,10 +321,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mainTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 37,
     color: '#2C5282',
-    marginBottom: 10,
+    marginBottom: -9,
+    fontFamily: 'BalooBhaijaan2_700Bold',
   },
   subtitle: {
     fontSize: 16,
@@ -385,9 +385,9 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'BalooBhaijaan2_700Bold',
     color: '#2D3748',
-    marginBottom: 5,
+    marginBottom: 0,
   },
   categoryDescription: {
     fontSize: 14,
