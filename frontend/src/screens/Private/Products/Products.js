@@ -5,7 +5,7 @@ import ActionButtons from '../../../components/Private/Product/ActionButton.js';
 import SearchBar from '../../../components/Private/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
 import CreateProductModal from '../../../components/Private/Product/CreateProductModal.js';
-import ProductDetailModal from '../../../components/Private/Product/ProductDetailModal.js';
+import DetailProductModal from '../../../components/Private/Product/DetailProductModal.js';
 import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
 import Toast from 'react-native-toast-message';
 import { API_URL } from '../../../config';
@@ -120,24 +120,91 @@ const ProductosScreen = () => {
 
   // Abrir modal de creación
   const handleAgregarProducto = () => {
+    setSelectedProduct(null);
     setModalVisible(true);
   };
 
   // Cerrar modal de creación
   const handleCloseModal = () => {
     setModalVisible(false);
+    setSelectedProduct(null);
   };
 
-  // Abrir modal de detalle
+  // Abrir modal de detalles del producto
   const handleProductPress = (product) => {
     setSelectedProduct(product);
     setDetailModalVisible(true);
   };
 
-  // Cerrar modal de detalle
-  const handleCloseDetailModal = () => {
-    setDetailModalVisible(false);
-    setSelectedProduct(null);
+  // Manejar actualización de producto
+  const handleUpdateProduct = async (productId, updatedData) => {
+    try {
+      setLoading(true);
+      console.log('🔄 [SCREEN] Actualizando producto:', productId);
+      console.log('📝 [SCREEN] Datos actualizados:', updatedData);
+
+      const response = await fetch(`${API_URL}products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al actualizar el producto');
+      }
+
+      const data = await response.json();
+      console.log('✅ [SCREEN] Producto actualizado:', data);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Éxito',
+        text2: 'Producto actualizado correctamente'
+      });
+
+      await loadProducts();
+    } catch (error) {
+      console.error('💥 [SCREEN] Error updating product:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'No se pudo actualizar el producto'
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manejar eliminación de producto
+  const handleDeleteProduct = async (productId) => {
+    try {
+      const response = await fetch(`${API_URL}products/${productId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el producto');
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Éxito',
+        text2: 'Producto eliminado correctamente'
+      });
+
+      await loadProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo eliminar el producto'
+      });
+    }
   };
 
   // Crear producto
@@ -169,52 +236,6 @@ const ProductosScreen = () => {
         type: 'error',
         text1: 'Error',
         text2: error.message || 'No se pudo crear el producto'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Editar producto
-  const handleEditProduct = (product) => {
-    handleCloseDetailModal();
-    // TODO: Abrir modal de edición con los datos del producto
-    Toast.show({
-      type: 'info',
-      text1: 'Editar Producto',
-      text2: 'Funcionalidad de edición próximamente'
-    });
-  };
-
-  // Eliminar producto
-  const handleDeleteProduct = async (productId) => {
-    try {
-      setLoading(true);
-      handleCloseDetailModal();
-      
-      // TODO: Implementar llamada al API para eliminar
-      const response = await fetch(`${API_URL}products/${productId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar el producto');
-      }
-
-      Toast.show({
-        type: 'success',
-        text1: 'Éxito',
-        text2: 'Producto eliminado correctamente'
-      });
-
-      await loadProducts();
-      
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'No se pudo eliminar el producto'
       });
     } finally {
       setLoading(false);
@@ -266,13 +287,18 @@ const ProductosScreen = () => {
         loading={loading}
       />
 
-      {/* Modal de detalle del producto */}
-      <ProductDetailModal
+      {/* Modal de detalles del producto */}
+      <DetailProductModal
         visible={detailModalVisible}
+        onClose={() => {
+          setDetailModalVisible(false);
+          setSelectedProduct(null);
+        }}
         product={selectedProduct}
-        onClose={handleCloseDetailModal}
-        onEdit={handleEditProduct}
+        onUpdate={handleUpdateProduct}
         onDelete={handleDeleteProduct}
+        categories={categories}
+        holidays={holidays}
       />
       
       {/* Toast para notificaciones */}

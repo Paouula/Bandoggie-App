@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     flex: 1,
-    backgroundColor: '#FAA543',
+    backgroundColor: '#f08819',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   },
   festividadButton: {
     flex: 1,
-    backgroundColor: '#CB8E45',
+    backgroundColor: '#c78937',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

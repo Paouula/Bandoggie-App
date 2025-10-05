@@ -22,7 +22,7 @@ export default function DrawerNavigation() {
         options={{
           title: 'Bandoggie',
           headerTitleStyle: {
-            fontFamily: 'BalooBhaijaan2_700Bold', // 👈 fuente personalizada
+            fontFamily: 'BalooBhaijaan2_700Bold',
             fontSize: 20,
           },
         }}
