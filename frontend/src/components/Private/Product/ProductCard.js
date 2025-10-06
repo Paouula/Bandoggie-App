@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4a90a4',
+    color: '#1c4f74',
   },
 });
 

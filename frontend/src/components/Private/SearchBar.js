@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-    backgroundColor: '#36A360',
+    backgroundColor: '#609dd5',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
