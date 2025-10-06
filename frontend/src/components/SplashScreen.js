@@ -7,6 +7,7 @@ import {
   StatusBar,
   Image
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
 
 const BandoggieSplashScreen = ({ onFinish }) => {
@@ -72,7 +73,6 @@ const BandoggieSplashScreen = ({ onFinish }) => {
       duration: 100, 
       useNativeDriver: true,
     }).start(() => {
-
       onFinish && onFinish();
     });
   };
@@ -83,8 +83,13 @@ const BandoggieSplashScreen = ({ onFinish }) => {
   });
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#365a7d" />
+    <LinearGradient
+      colors={['#b8d4e8', '#e8f4f8']}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#b8d4e8" />
 
       <Animated.View 
         style={[
@@ -97,7 +102,6 @@ const BandoggieSplashScreen = ({ onFinish }) => {
       >
         {/* Logo BANDOGGIE */}
         <View style={styles.logoContainer}>
-
           <Image 
             source={require('../../assets/SplashScreen/bandoggie-logo.png')} 
             style={styles.logoImage}
@@ -120,17 +124,15 @@ const BandoggieSplashScreen = ({ onFinish }) => {
             style={styles.boneImage}
             resizeMode="contain"
           />
-
         </Animated.View>
       </Animated.View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#365a7d', 
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   boneImage: {
     width: 40,
     height: 40,
-    tintColor: 'white',
+    tintColor: '#5a8ab8',
   },
 });
 
