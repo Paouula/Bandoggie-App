@@ -70,4 +70,4 @@ app.use('/api/reviews', ReviewsRoutes)
 app.use('/api/cart', CartRoutes);
 app.use('/api/Categories', CategoriasRoutes)
 
-export default app;
+export default app; 

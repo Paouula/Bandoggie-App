@@ -6,6 +6,7 @@ import SearchBar from '../../../components/Private/SearchBar.js';
 import ProductCard from '../../../components/Private/Product/ProductCard.js';
 import CreateProductModal from '../../../components/Private/Product/CreateProductModal.js';
 import DetailProductModal from '../../../components/Private/Product/DetailProductModal.js';
+import { ManageCategoriesModal, ManageHolidaysModal } from '../../../components/Private/ManageCategoriesandHolidaysModal.js';
 import useFetchProducts from '../../../hooks/Products/useFetchProducts.js';
 import Toast from 'react-native-toast-message';
 import { API_URL } from '../../../config';
@@ -16,6 +17,8 @@ const ProductosScreen = () => {
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [categoriesModalVisible, setCategoriesModalVisible] = useState(false);
+  const [holidaysModalVisible, setHolidaysModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [holidays, setHolidays] = useState([]);
@@ -108,6 +111,26 @@ const ProductosScreen = () => {
       setProductos([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Recargar categorías
+  const refreshCategories = async () => {
+    try {
+      const categoriesData = await getCategories();
+      setCategories(categoriesData || []);
+    } catch (error) {
+      console.error('Error refreshing categories:', error);
+    }
+  };
+
+  // Recargar festividades
+  const refreshHolidays = async () => {
+    try {
+      const holidaysData = await getHolidays();
+      setHolidays(holidaysData || []);
+    } catch (error) {
+      console.error('Error refreshing holidays:', error);
     }
   };
 
@@ -270,7 +293,10 @@ const ProductosScreen = () => {
                 setSearchText={setSearchText} 
                 handleAgregarProducto={handleAgregarProducto}
               />
-              <ActionButtons />
+              <ActionButtons 
+                onManageCategories={() => setCategoriesModalVisible(true)}
+                onManageHolidays={() => setHolidaysModalVisible(true)}
+              />
               <View style={styles.productsStartBackground} />
             </View>
           )}
@@ -299,6 +325,22 @@ const ProductosScreen = () => {
         onDelete={handleDeleteProduct}
         categories={categories}
         holidays={holidays}
+      />
+
+      {/* Modal de gestión de categorías */}
+      <ManageCategoriesModal
+        visible={categoriesModalVisible}
+        onClose={() => setCategoriesModalVisible(false)}
+        categories={categories}
+        onRefresh={refreshCategories}
+      />
+
+      {/* Modal de gestión de festividades */}
+      <ManageHolidaysModal
+        visible={holidaysModalVisible}
+        onClose={() => setHolidaysModalVisible(false)}
+        holidays={holidays}
+        onRefresh={refreshHolidays}
       />
       
       {/* Toast para notificaciones */}
