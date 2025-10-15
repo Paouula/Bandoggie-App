@@ -127,9 +127,7 @@ export default function CollarScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
+  
           <Text style={styles.headerTitle}>Collares</Text>
           <TouchableOpacity>
             <Ionicons name="search" size={24} color="#333" />
@@ -158,21 +156,23 @@ export default function CollarScreen({ navigation }) {
           </View>
         ) : (
           <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-            {products.map((product) => (
-              <TouchableOpacity
-                key={product._id}
-                style={styles.productCard}
-                onPress={() => openProductDetail(product)}
-              >
-                <Image 
-                  source={{ uri: product.image }} 
-                  style={styles.productImage} 
-                  resizeMode="cover" 
-                />
-                <Text style={styles.productTitle}>{product.nameProduct}</Text>
-                <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.productsGrid}>
+              {products.map((product) => (
+                <TouchableOpacity
+                  key={product._id}
+                  style={styles.productCard}
+                  onPress={() => openProductDetail(product)}
+                >
+                  <Image 
+                    source={{ uri: product.image }} 
+                    style={styles.productImage} 
+                    resizeMode="cover" 
+                  />
+                  <Text style={styles.productTitle}>{product.nameProduct}</Text>
+                  <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
         )}
       </SafeAreaView>
@@ -183,9 +183,6 @@ export default function CollarScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={goBackToList}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalle del Producto</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -392,20 +389,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+ header: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 20,
+  paddingVertical: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E0E0E0',
+  marginTop: -40,
+},
+headerTitle: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  textAlign: 'center',
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+},
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -457,36 +459,43 @@ const styles = StyleSheet.create({
   },
   productsList: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  productsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingTop: 10,
   },
   productCard: {
     backgroundColor: '#FFF',
     borderRadius: 15,
-    marginVertical: 10,
-    padding: 15,
+    marginBottom: 15,
+    padding: 10,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    width: (width - 40) / 2,
   },
   productImage: {
     width: '100%',
-    height: 200,
+    height: 150,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   productTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
     marginBottom: 5,
     textAlign: 'center',
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0d3958ff',
     textAlign: 'center',
   },
   detailContainer: {

@@ -140,14 +140,11 @@ export default function BandanasScreen({ navigation }) {
     );
   }
 
-  // Vista de lista de productos reales
+  // Vista de lista de productos en grid de 2 columnas
   if (currentView === 'list') {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Bandanas</Text>
           <TouchableOpacity>
             <Ionicons name="search" size={24} color="#333" />
@@ -163,21 +160,23 @@ export default function BandanasScreen({ navigation }) {
           </View>
         ) : (
           <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-            {products.map((product) => (
-              <TouchableOpacity
-                key={product._id}
-                style={styles.productCard}
-                onPress={() => openProductDetail(product)}
-              >
-                <Image 
-                  source={{ uri: product.image }} 
-                  style={styles.productImage} 
-                  resizeMode="cover"
-                />
-                <Text style={styles.productTitle}>{product.nameProduct}</Text>
-                <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.productsGrid}>
+              {products.map((product) => (
+                <TouchableOpacity
+                  key={product._id}
+                  style={styles.productCard}
+                  onPress={() => openProductDetail(product)}
+                >
+                  <Image 
+                    source={{ uri: product.image }} 
+                    style={styles.productImage} 
+                    resizeMode="cover"
+                  />
+                  <Text style={styles.productTitle} numberOfLines={2}>{product.nameProduct}</Text>
+                  <Text style={styles.productPrice}>Desde ${parseFloat(product.price).toFixed(2)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
         )}
       </SafeAreaView>
@@ -446,19 +445,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 20,
+  paddingVertical: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E0E0E0',
+  marginTop: -40,
+},
+headerTitle: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  textAlign: 'center',
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+},
   noProductsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -473,13 +477,20 @@ const styles = StyleSheet.create({
   },
   productsList: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  productsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    justifyContent: 'space-between',
   },
   productCard: {
     backgroundColor: '#FFF',
     borderRadius: 15,
-    marginVertical: 10,
-    padding: 15,
+    marginBottom: 15,
+    padding: 10,
+    width: (width - 40) / 2,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -488,21 +499,22 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 200,
+    height: 150,
     borderRadius: 10,
     marginBottom: 10,
   },
   productTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
     marginBottom: 5,
     textAlign: 'center',
+    minHeight: 35,
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c5aa0',
+    color: '#0d3958ff',
     textAlign: 'center',
   },
   detailContainer: {
@@ -691,32 +703,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: 10,
-  },
-  sizesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  sizeOption: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    minWidth: 50,
-    alignItems: 'center',
-  },
-  selectedSize: {
-    borderColor: '#2c5aa0',
-    backgroundColor: '#f0f5ff',
-  },
-  sizeText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  selectedSizeText: {
-    color: '#2c5aa0',
-    fontWeight: 'bold',
   },
   quantityContainer: {
     flexDirection: 'row',

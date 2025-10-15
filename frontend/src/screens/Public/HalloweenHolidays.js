@@ -541,7 +541,9 @@ const styles = StyleSheet.create({
   
   // Products grid
   productsGrid: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   
   // Product card styles
@@ -556,10 +558,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
     marginBottom: 15,
     position: 'relative',
+    width: '48%',
   },
   productImage: {
     width: '100%',
-    height: 200,
+    height: 150,
   },
   productInfo: {
     padding: 15,

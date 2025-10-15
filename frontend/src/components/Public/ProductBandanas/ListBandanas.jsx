@@ -1,20 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, useWindowDimensions } from "react-native";
 import ProductCard from "../PublicCardProduct/ProductCardPublic.jsx";
 
 const ListBandanas = ({ Bandanas, navigation }) => {
-  console.log("Bandanas que llegan al componente:", Bandanas);
+  const { width } = useWindowDimensions();
 
-  // Función para renderizar cada item
+  // Calcula el ancho de cada card dinámicamente
+  const cardWidth = (width - 40) / 2; // 40 = padding lateral total + separación
+
   const renderBandanaItem = ({ item }) => (
-    <ProductCard 
-      key={item._id} 
-      product={item} 
-      navigation={navigation}
-    />
+    <View style={[styles.cardWrapper, { width: cardWidth }]}>
+      <ProductCard key={item._id} product={item} navigation={navigation} />
+    </View>
   );
 
-  // Si no hay bandanas se  mostruestra este mensaje
   if (!Array.isArray(Bandanas) || Bandanas.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -30,10 +29,9 @@ const ListBandanas = ({ Bandanas, navigation }) => {
         renderItem={renderBandanaItem}
         keyExtractor={(item) => item._id}
         numColumns={2}
+        showsVerticalScrollIndicator={false}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.productGrid}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </View>
   );
@@ -44,26 +42,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productGrid: {
-    padding: 10,
+    paddingHorizontal: 10,
     paddingBottom: 20,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginBottom: 15,
   },
-  separator: {
-    height: 10,
+  cardWrapper: {
+    borderRadius: 10,
+    overflow: "hidden",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 50,
   },
   noBandanasText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 20,
   },
 });
