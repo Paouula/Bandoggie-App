@@ -24,11 +24,12 @@ SplashScreen.preventAutoHideAsync();
 
 const AuthStack = createNativeStackNavigator();
 
+// Navegación de autenticación sin drawer ni tabs
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
-      <AuthStack.Screen name="Choose" component={ChooseScreen} />
+      <AuthStack.Screen name="ChooseAccount" component={ChooseScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="RegisterVet" component={RegisterVetScreen} />
       <AuthStack.Screen 
@@ -50,6 +51,7 @@ function AppContent() {
     BalooBhaijaan2_700Bold,
   });
 
+  // Carga las fuentes locales
   useEffect(() => {
     async function loadLocalFonts() {
       await Font.loadAsync({
@@ -61,6 +63,7 @@ function AppContent() {
     loadLocalFonts();
   }, []);
 
+  // Delay mínimo para el splash
   useEffect(() => {
     async function prepareApp() {
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -78,6 +81,7 @@ function AppContent() {
     }
   }, [balooLoaded, inriaLoaded, showSplash]);
 
+  // Espera a que todo esté listo antes de renderizar
   if (!balooLoaded || !inriaLoaded || loadingUser || loadingVerification) {
     return null;
   }
@@ -86,10 +90,13 @@ function AppContent() {
     return <BandoggieSplashScreen onFinish={handleSplashFinish} />;
   }
 
+  // Determina si el usuario está autenticado y sin verificación pendiente
+  const isAuthenticated = user && !pendingVerification;
+
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
-        {user && !pendingVerification ? <DrawerNavigation /> : <AuthNavigator />}
+        {isAuthenticated ? <DrawerNavigation /> : <AuthNavigator />}
       </NavigationContainer>
       <Toast />
     </View>

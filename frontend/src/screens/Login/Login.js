@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form";
-import { Ionicons } from "@expo/vector-icons";
 
 // Importar componentes personalizados para toda la app
 import InputComponent from "../../components/Input/Input.js";
@@ -21,8 +20,7 @@ import ButtonComponent from "../../components/Button/Button.js";
 import PasswordInput from "../../components/InputPassword/InputPassword.js";
 import { useAuth } from "../../context/AuthContext";
 
-// AHORA RECIBE onLogin POR PROPS
-const LoginScreen = (props) => {
+const LoginScreen = () => {
   const navigation = useNavigation();
   const { Login, loadingUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -59,12 +57,7 @@ const LoginScreen = (props) => {
 
       if (response.success) {
         reset();
-        // LLAMA A LA PROP onLogin PARA AVISAR QUE EL USUARIO ESTÁ AUTENTICADO
-        if (props.onLogin) {
-          props.onLogin();
-        }
-        // Si quieres mostrar un mensaje, puedes hacerlo aquí
-        // Alert.alert("¡Bienvenido!", "Sesión iniciada correctamente");
+        // El cambio de navegación se maneja automáticamente en App.js
       } else {
         Alert.alert(
           "Error de autenticación",
@@ -88,10 +81,6 @@ const LoginScreen = (props) => {
 
   const handleGoToRegister = () => {
     navigation.navigate("ChooseAccount");
-      };
-
-  const handleGoBack = () => {
-    navigation.goBack();
   };
 
   if (loadingUser) {
@@ -114,9 +103,7 @@ const LoginScreen = (props) => {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            
-          </View>
+          <View style={styles.header} />
 
           <View style={styles.logoContainer}>
             <Image
@@ -236,7 +223,7 @@ const LoginScreen = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff", // Cambiado de rgba(0, 0, 0, 0.5)
+    backgroundColor: "#fff",
   },
   loadingContainer: {
     flex: 1,
@@ -246,15 +233,14 @@ const styles = StyleSheet.create({
     padding: 30,
   },
   keyboardView: {
-    flex: 1, // Removido maxWidth y constrains de ancho
+    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20, // Cambiado de 30
+    paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 30,
-   
   },
   header: {
     flexDirection: "row",
@@ -263,11 +249,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 10,
-    // ELIMINADO: position: "absolute", top: -10, right: -15, zIndex: 1001
   },
   logoContainer: {
     alignItems: "center",
-    marginBottom: 20, // Aumentado de 10
+    marginBottom: 20,
   },
   logo: {
     width: 130,
@@ -277,8 +262,8 @@ const styles = StyleSheet.create({
   separator: {
     height: 2,
     backgroundColor: "#b4ceec",
-    marginHorizontal: 0, // Cambiado de -30
-    marginVertical: 20, // Aumentado de 10
+    marginHorizontal: 0,
+    marginVertical: 20,
   },
   title: {
     fontSize: 24,
@@ -290,7 +275,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
   },
   registerLink: {
-    fontSize: 14, // Aumentado de 12
+    fontSize: 14,
     color: "#ff9900",
     textAlign: "center",
     marginBottom: 20,
@@ -298,7 +283,7 @@ const styles = StyleSheet.create({
   },
   form: {
     alignItems: "stretch",
-    marginBottom: 40, // Reducido de 60
+    marginBottom: 40,
   },
   label: {
     fontSize: 14,
@@ -319,7 +304,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   forgotPassword: {
-    fontSize: 14, // Aumentado de 12
+    fontSize: 14,
     color: "#ff9900",
     textAlign: "right",
     marginTop: 20,
@@ -338,7 +323,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: 40,
     overflow: "hidden",
-    // ELIMINADO: borderBottomLeftRadius y borderBottomRightRadius
   },
   decorationGradient: {
     flex: 1,

@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout sin reset de navegación (App.js maneja el cambio automáticamente)
   const logout = async () => {
     try {
       await API_FETCH_JSON("logout", {
@@ -57,11 +58,13 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       Toast.show({ type: "error", text1: "Error al cerrar sesión" });
     } finally {
+      // Limpia el estado local
       await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("verificationInfo");
       setUser(null);
       setVerificationInfo({ email: "", role: "" });
       setPendingVerification(false);
+      // App.js detectará el cambio y mostrará AuthNavigator automáticamente
     }
   };
 
@@ -179,7 +182,7 @@ export const AuthProvider = ({ children }) => {
     updateVerificationInfo,
     clearVerificationInfo,
     checkPendingVerification,
-    isEmployee: () => user?.userType === "employee",
+    isEmployee: () => user?.userType === "employee" || user?.userType === "admin",
     isVet: () => user?.userType === "vet",
     isClient: () => user?.userType === "client",
     isPublicUser: () => ["vet", "client"].includes(user?.userType),

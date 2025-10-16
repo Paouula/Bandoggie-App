@@ -31,13 +31,10 @@ export default function DrawerNavigation() {
   );
 }
 
+// Obtiene las opciones del menú según el rol
 const getDrawerItemsByRole = (userType) => {
   const publicRoutes = [
-    { label: 'Inicio', screen: 'Inicio' },
-    { label: 'Bandanas', screen: 'Bandanas' },
-    { label: 'Collares', screen: 'Collares' },
-    { label: 'Accesorios', screen: 'Accesorios' },
-    { label: 'Festividades', screen: 'FestivitiesScreen' },
+
   ];
 
   const privateRoutes = {
@@ -51,15 +48,27 @@ const getDrawerItemsByRole = (userType) => {
       { label: 'Empleados', screen: 'EmployeesScreen' },
       { label: 'Clientes', screen: 'ClientsScreen' },
     ],
-    client: [],
-    vet: [],
+    client: [
+      { label: 'Inicio', screen: 'Inicio' },
+      { label: 'Bandanas', screen: 'Bandanas' },
+      { label: 'Collares', screen: 'Collares' },
+      { label: 'Accesorios', screen: 'Accesorios' },
+      { label: 'Festividades', screen: 'FestivitiesScreen' },
+    ],
+    vet: [
+      { label: 'Inicio', screen: 'Inicio' },
+      { label: 'Bandanas', screen: 'Bandanas' },
+      { label: 'Collares', screen: 'Collares' },
+      { label: 'Accesorios', screen: 'Accesorios' },
+      { label: 'Festividades', screen: 'FestivitiesScreen' },
+    ],
   };
 
   return [...publicRoutes, ...(privateRoutes[userType] || [])];
 };
 
 function CustomDrawerContent({ navigation }) {
-  const { user } = useAuth;
+  const { user, logout } = useAuth(); // FIX: Llamar useAuth como función
 
   const drawerItems = getDrawerItemsByRole(user?.userType);
 
@@ -67,6 +76,11 @@ function CustomDrawerContent({ navigation }) {
     navigation.navigate('Main', {
       screen: screen === 'Inicio' ? 'BottomTabs' : screen,
     });
+  };
+
+  // Maneja el cierre de sesión
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -77,12 +91,22 @@ function CustomDrawerContent({ navigation }) {
           style={styles.logo}
           resizeMode="contain"
         />
+        {user && (
+          <Text style={styles.userInfo}>
+            {user.name || user.email}
+          </Text>
+        )}
       </View>
 
       <View style={styles.drawerContent}>
         {drawerItems.map(({ label, screen }) => (
           <DrawerItem key={label} label={label} onPress={() => navigateTo(screen)} />
         ))}
+      </View>
+
+      {/* Botón de cerrar sesión al final */}
+      <View style={styles.logoutContainer}>
+        <DrawerItem label="Cerrar Sesión" onPress={handleLogout} isLogout />
       </View>
     </View>
   );
@@ -126,7 +150,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
   },
-   drawerLabel: {
+  drawerLabel: {
     fontSize: 18,
     fontWeight: '500',
     color: '#333',
