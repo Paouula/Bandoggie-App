@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Image,
   TouchableOpacity,
   TextInput,
@@ -15,305 +15,223 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-// Importar el hook personalizado
-import { useProductsWithLocalFilter } from '../hooks/useProducts';
-// O si prefieres usar la función directa:
-// import productsApi from '../services/productsApi';
+import { useProductsWithLocalFilter } from '../../hooks/Products/useFetchProducts';
 
 const { width } = Dimensions.get('window');
 
 const HalloweenHolidays = ({ navigation, route }) => {
   const [searchText, setSearchText] = useState('');
   
-  // Recibir parámetros desde el HomeScreen
   const holidayName = route?.params?.holidayName || 'Halloween';
   const holidayId = route?.params?.holidayId || null;
   const holidayColor = route?.params?.holidayColor || '#FF6B6B';
 
-  // Usar el hook personalizado para obtener y filtrar productos
   const {
     products: filteredProducts,
-    allProducts,
     loading,
     error,
     refetch,
     filterProducts,
     clearFilter,
     isFiltered,
-    hasData,
     totalCount,
     filteredCount,
   } = useProductsWithLocalFilter(holidayId);
 
-  // Manejar búsqueda en tiempo real
   const handleSearch = (text) => {
     setSearchText(text);
     filterProducts(text);
   };
 
-  // Limpiar búsqueda
   const handleClearSearch = () => {
     setSearchText('');
     clearFilter();
   };
 
-  // Manejar selección de producto
   const handleProductPress = (product) => {
-    console.log('Producto seleccionado:', product.nameProduct);
     navigation.navigate('ProductDetail', { 
       productId: product._id,
       product: product 
     });
   };
 
-  // Manejar botón atrás
   const handleBackPress = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
-    }
+    navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home');
   };
 
-  // Manejar refresh (pull to refresh)
-  const handleRefresh = () => {
-    refetch();
-  };
-
-  // Mostrar alerta de error con opciones
   const showErrorAlert = () => {
-    Alert.alert(
-      'Error de conexión',
-      error,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Reintentar', onPress: refetch }
-      ]
-    );
+    Alert.alert('Error de conexión', error, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Reintentar', onPress: refetch }
+    ]);
   };
 
-  // Renderizar mensaje cuando no hay productos
-  const renderEmptyState = () => {
-    if (loading) return null;
-
-    return (
-      <View style={styles.emptyContainer}>
-        <Ionicons 
-          name={isFiltered ? "search" : "sad-outline"} 
-          size={64} 
-          color="#ccc" 
-          style={styles.emptyIcon}
+  const ProductCard = ({ product }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => handleProductPress(product)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.cardImageWrapper}>
+        <Image
+          source={{ uri: product.image }}
+          style={styles.cardImage}
+          resizeMode="cover"
         />
-        <Text style={styles.emptyTitle}>
-          {isFiltered ? 'Sin resultados' : 'No hay productos'}
-        </Text>
-        <Text style={styles.emptyText}>
-          {isFiltered 
-            ? `No se encontraron productos que coincidan con "${searchText}"`
-            : `No hay productos disponibles para ${holidayName} en este momento`
-          }
-        </Text>
-        {isFiltered && (
-          <TouchableOpacity 
-            style={styles.clearFilterButton}
-            onPress={handleClearSearch}
-          >
-            <Text style={styles.clearFilterText}>Limpiar búsqueda</Text>
-          </TouchableOpacity>
-        )}
-        {!isFiltered && (
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={refetch}
-          >
-            <Text style={styles.retryText}>Reintentar</Text>
-          </TouchableOpacity>
+        {product.isNew && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>Nuevo</Text>
+          </View>
         )}
       </View>
-    );
-  };
-
-  // Renderizar producto individual
-  const renderProduct = (product) => (
-    <TouchableOpacity
-      key={product._id}
-      style={styles.productCard}
-      onPress={() => handleProductPress(product)}
-      activeOpacity={0.8}
-    >
-      <Image
-        source={{ uri: product.image }}
-        style={styles.productImage}
-        resizeMode="cover"
-      />
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
           {product.nameProduct}
         </Text>
-        <Text style={styles.productPrice}>
+        <Text style={styles.cardPrice}>
           ${parseFloat(product.price || 0).toFixed(2)}
         </Text>
         {product.idCategory && (
-          <Text style={styles.productCategory}>
+          <Text style={styles.cardCategory} numberOfLines={1}>
             {product.idCategory.nameCategory}
           </Text>
         )}
-        {product.idHolidayProduct && (
-          <Text style={styles.productHoliday}>
-            🎃 {product.idHolidayProduct.nameHoliday}
-          </Text>
-        )}
       </View>
-      {/* Badge para productos nuevos o en oferta */}
-      {product.isNew && (
-        <View style={styles.newBadge}>
-          <Text style={styles.badgeText}>Nuevo</Text>
+    </TouchableOpacity>
+  );
+
+  const HeaderComponent = () => (
+    <View>
+      {/* Header con búsqueda */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={18} color="#999" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar..."
+            value={searchText}
+            onChangeText={handleSearch}
+            placeholderTextColor="#999"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={handleClearSearch}>
+              <Ionicons name="close-circle" size={18} color="#999" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading && <ActivityIndicator size="small" color="#FFA500" style={{ marginLeft: 10 }} />}
+      </View>
+
+      {/* Banner */}
+      <View style={[styles.banner, { backgroundColor: holidayColor }]}>
+        <View style={styles.bannerText}>
+          <Text style={styles.bannerTitle}>{holidayName}</Text>
+          <Text style={styles.bannerDesc}>
+            Lindas prendas para tu mascota
+          </Text>
+          <Text style={styles.bannerCount}>
+            {isFiltered ? filteredCount : totalCount} productos
+          </Text>
+        </View>
+        <Image
+          source={{ uri: 'https://images.unsplash.com/photo-1512546148165-e50d714a565a?w=150&h=150&fit=crop' }}
+          style={styles.bannerImg}
+        />
+      </View>
+
+      {/* Error */}
+      {error && (
+        <View style={styles.errorBox}>
+          <Ionicons name="warning-outline" size={18} color="#D32F2F" />
+          <Text style={styles.errorMsg}>{error}</Text>
+          <TouchableOpacity onPress={showErrorAlert}>
+            <Text style={styles.errorLink}>Ver</Text>
+          </TouchableOpacity>
         </View>
       )}
-    </TouchableOpacity>
+
+      {/* Título */}
+      <View style={styles.titleSection}>
+        <Text style={styles.sectionTitle}>
+          {isFiltered ? 'Resultados' : `Productos de ${holidayName}`}
+        </Text>
+        {isFiltered && <Text style={styles.count}>{filteredCount}/{totalCount}</Text>}
+      </View>
+    </View>
+  );
+
+  const EmptyComponent = () => (
+    <View style={styles.empty}>
+      <Ionicons 
+        name={isFiltered ? "search" : "sad-outline"} 
+        size={50} 
+        color="#ddd" 
+      />
+      <Text style={styles.emptyTitle}>
+        {isFiltered ? 'Sin resultados' : 'No hay productos'}
+      </Text>
+      <Text style={styles.emptyText}>
+        {isFiltered 
+          ? `No encontramos productos con "${searchText}"`
+          : `No hay productos de ${holidayName}`
+        }
+      </Text>
+      <TouchableOpacity 
+        style={styles.emptyBtn}
+        onPress={isFiltered ? handleClearSearch : refetch}
+      >
+        <Text style={styles.emptyBtnText}>
+          {isFiltered ? 'Limpiar búsqueda' : 'Reintentar'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       
-      {/* Header con barra de búsqueda */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar productos..."
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholderTextColor="#666"
-            returnKeyType="search"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity 
-              onPress={handleClearSearch}
-              style={styles.clearButton}
-            >
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          )}
+      {loading && filteredProducts.length === 0 ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#FFA500" />
+          <Text style={styles.loadingText}>Cargando...</Text>
         </View>
+      ) : (
+        <FlatList
+          ListHeaderComponent={<HeaderComponent />}
+          ListEmptyComponent={<EmptyComponent />}
+          data={filteredProducts}
+          renderItem={({ item }) => <ProductCard product={item} />}
+          keyExtractor={(item) => item._id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContent}
+          scrollEnabled={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={refetch}
+              colors={['#FFA500']}
+              tintColor="#FFA500"
+            />
+          }
+        />
+      )}
 
-        {/* Indicador de loading en el header */}
-        {loading && (
-          <ActivityIndicator size="small" color="#FFA500" style={styles.headerLoader} />
-        )}
-      </View>
-      
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={handleRefresh}
-            colors={['#FFA500']}
-            tintColor="#FFA500"
-          />
-        }
-      >
-        {/* Banner de festividad */}
-        <View style={styles.bannerContainer}>
-          <View style={[styles.bannerContent, { backgroundColor: holidayColor }]}>
-            <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>{holidayName}</Text>
-              <Text style={styles.bannerDescription}>
-                Lindas y hermosas prendas para que tu mascota esté muy especial
-              </Text>
-              {hasData && (
-                <Text style={styles.bannerStats}>
-                  {isFiltered ? filteredCount : totalCount} productos disponibles
-                </Text>
-              )}
-            </View>
-            <View style={styles.bannerImageContainer}>
-              <Image
-                source={{ 
-                  uri: 'https://images.unsplash.com/photo-1512546148165-e50d714a565a?w=200&h=200&fit=crop&crop=face'
-                }}
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
-              <View style={styles.decorativeContainer}>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-                <Text style={styles.decorativeEmoji}>🐾</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Error Banner */}
-        {error && (
-          <View style={styles.errorBanner}>
-            <Ionicons name="warning-outline" size={20} color="#D32F2F" />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={showErrorAlert}>
-              <Text style={styles.errorAction}>Ver más</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Lista de productos */}
-        <View style={styles.productsContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {isFiltered ? 'Resultados de búsqueda' : `Productos de ${holidayName}`}
-            </Text>
-            <View style={styles.statsContainer}>
-              {isFiltered && (
-                <Text style={styles.statsText}>
-                  {filteredCount} de {totalCount}
-                </Text>
-              )}
-            </View>
-          </View>
-          
-          {/* Loading State */}
-          {loading && filteredProducts.length === 0 && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FFA500" />
-              <Text style={styles.loadingText}>Cargando productos...</Text>
-            </View>
-          )}
-          
-          {/* Products Grid */}
-          {!loading && filteredProducts.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <View style={styles.productsGrid}>
-              {filteredProducts.map(renderProduct)}
-            </View>
-          )}
-        </View>
-        
-        {/* Espaciado para la navegación inferior */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-      
-      {/* Navegación inferior */}
+      {/* Bottom Nav */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home" size={24} color="#666" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => console.log('Categories')}>
+        <TouchableOpacity style={styles.navBtn}>
           <Ionicons name="grid" size={24} color="#666" />
-        </TouchableOpacity> 
-        <TouchableOpacity style={styles.navItem} onPress={() => console.log('Cart')}>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navBtn}>
           <Ionicons name="bag" size={24} color="#666" />
         </TouchableOpacity>
       </View>
@@ -324,288 +242,233 @@ const HalloweenHolidays = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 80,
+    backgroundColor: '#f9f9f9',
   },
   
-  // Header styles
-  header: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+  // Top Header
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    gap: 10,
   },
-  backButton: {
-    marginRight: 15,
+  backBtn: {
     padding: 5,
   },
-  searchContainer: {
+  searchBox: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  searchIcon: {
-    marginRight: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
   },
-  clearButton: {
-    marginLeft: 5,
-  },
-  headerLoader: {
-    marginLeft: 10,
-  },
-  
-  // Banner styles
-  bannerContainer: {
-    margin: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  bannerContent: {
+
+  // Banner
+  banner: {
     flexDirection: 'row',
-    padding: 20,
+    margin: 15,
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
+    elevation: 3,
   },
-  bannerTextContainer: {
+  bannerText: {
     flex: 1,
-    paddingRight: 15,
+    paddingRight: 10,
   },
   bannerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 5,
   },
-  bannerDescription: {
-    fontSize: 14,
-    color: '#fff',
-    lineHeight: 20,
-    marginBottom: 10,
-    opacity: 0.9,
-  },
-  bannerStats: {
+  bannerDesc: {
     fontSize: 12,
+    color: '#fff',
+    opacity: 0.9,
+    marginBottom: 5,
+  },
+  bannerCount: {
+    fontSize: 11,
     color: '#fff',
     opacity: 0.8,
     fontWeight: '600',
   },
-  bannerImageContainer: {
-    position: 'relative',
-    alignItems: 'center',
-  },
-  bannerImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  bannerImg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 3,
     borderColor: '#fff',
   },
-  decorativeContainer: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
+
+  // Error
+  errorBox: {
     flexDirection: 'row',
-    transform: [{ rotate: '15deg' }],
-  },
-  decorativeEmoji: {
-    fontSize: 16,
-    marginHorizontal: 2,
-  },
-  
-  // Error banner styles
-  errorBanner: {
-    backgroundColor: '#FFEBEE',
-    marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 15,
-    borderRadius: 10,
-    flexDirection: 'row',
+    marginHorizontal: 15,
+    marginBottom: 15,
+    padding: 12,
+    backgroundColor: '#ffebee',
+    borderRadius: 8,
     alignItems: 'center',
+    gap: 10,
     borderLeftWidth: 4,
     borderLeftColor: '#D32F2F',
   },
-  errorText: {
+  errorMsg: {
     flex: 1,
+    fontSize: 13,
     color: '#D32F2F',
-    fontSize: 14,
-    marginLeft: 10,
   },
-  errorAction: {
+  errorLink: {
     color: '#D32F2F',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
-  
-  // Products section styles
-  productsContainer: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  sectionHeader: {
+
+  // Title Section
+  titleSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    paddingHorizontal: 15,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  statsContainer: {
-    alignItems: 'flex-end',
-  },
-  statsText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  
-  // Loading and empty states
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  emptyIcon: {
-    marginBottom: 15,
-  },
-  emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  count: {
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '600',
+  },
+
+  // Loading
+  loadingBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#999',
+    fontSize: 14,
+  },
+
+  // Empty
+  empty: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 12,
     marginBottom: 8,
-    textAlign: 'center',
   },
   emptyText: {
-    color: '#666',
-    fontSize: 14,
+    fontSize: 13,
+    color: '#999',
     textAlign: 'center',
-    lineHeight: 20,
     marginBottom: 20,
+    lineHeight: 18,
   },
-  clearFilterButton: {
+  emptyBtn: {
     backgroundColor: '#FFA500',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
+  },
+  emptyBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+
+  // List
+  listContent: {
+    paddingHorizontal: 8,
+    paddingBottom: 90,
+  },
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 7,
     marginBottom: 10,
   },
-  clearFilterText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  retryButton: {
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  retryText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  
-  // Products grid
-  productsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  
-  // Product card styles
-  productCard: {
+
+  // Card
+  card: {
+    width: '48.5%',
     backgroundColor: '#fff',
-    borderRadius: 15,
+    borderRadius: 10,
     overflow: 'hidden',
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    marginBottom: 15,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  cardImageWrapper: {
     position: 'relative',
-    width: '48%',
-  },
-  productImage: {
     width: '100%',
-    height: 150,
+    height: 130,
   },
-  productInfo: {
-    padding: 15,
+  cardImage: {
+    width: '100%',
+    height: '100%',
   },
-  productName: {
-    fontSize: 16,
+  badge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  cardContent: {
+    padding: 10,
+  },
+  cardTitle: {
+    fontSize: 13,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 16,
   },
-  productPrice: {
-    fontSize: 18,
+  cardPrice: {
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#FF6B6B',
     marginBottom: 4,
   },
-  productCategory: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  productHoliday: {
+  cardCategory: {
     fontSize: 11,
-    color: '#FFA500',
-    fontWeight: '500',
+    color: '#999',
   },
-  newBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  
-  // Bottom navigation styles
+
+  // Bottom Nav
   bottomNav: {
     position: 'absolute',
     bottom: 0,
@@ -613,26 +476,16 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    borderTopColor: '#eee',
+    paddingVertical: 12,
+    elevation: 5,
   },
-  navItem: {
+  navBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
-  },
-  
-  // Utility styles
-  bottomSpacing: {
-    height: 20,
+    paddingVertical: 8,
   },
 });
 

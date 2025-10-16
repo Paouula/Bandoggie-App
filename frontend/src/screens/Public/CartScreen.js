@@ -346,47 +346,6 @@ const CartScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const addToCart = async (product, quantity = 1) => {
-    try {
-      const updatedItems = [...cartItems];
-      const existingItemIndex = updatedItems.findIndex(item => 
-        item._id === product._id && 
-        item.talla === product.talla &&
-        item.color === product.color &&
-        item.petName === product.petName
-      );
-      
-      if (existingItemIndex !== -1) {
-        updatedItems[existingItemIndex].quantity += quantity;
-        updatedItems[existingItemIndex].subtotal = 
-          updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].price;
-      } else {
-        const newItem = {
-          _id: product._id || `temp_${Date.now()}`,
-          id: product._id || `temp_${Date.now()}`,
-          name: product.nameProduct || product.name || 'Producto',
-          nameProduct: product.nameProduct || product.name || 'Producto',
-          price: parseFloat(product.price) || 0,
-          quantity: quantity,
-          subtotal: (parseFloat(product.price) || 0) * quantity,
-          talla: product.talla || null,
-          color: product.color || null,
-          petName: product.petName || null,
-          image: product.image || null,
-          productInfo: product.productInfo || {}
-        };
-        updatedItems.push(newItem);
-      }
-      
-      setCartItems(updatedItems);
-      await saveCartToStorage(updatedItems);
-      Alert.alert('Éxito', `${product.nameProduct || product.name || 'Producto'} agregado al carrito`);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      Alert.alert('Error', 'Error al agregar al carrito');
-    }
-  };
-
   const removeFromCart = async (productId) => {
     try {
       const updatedItems = cartItems.filter(item => 
@@ -465,19 +424,6 @@ const CartScreen = ({ navigation }) => {
   const formatPrice = (price) => {
     const numPrice = parseFloat(price) || 0;
     return `$${numPrice.toFixed(2)}`;
-  };
-
-  const addSampleProduct = () => {
-    const sampleProduct = {
-      _id: `sample_${Date.now()}`,
-      nameProduct: `Producto de Ejemplo ${cartItems.length + 1}`,
-      price: Math.floor(Math.random() * 50) + 10,
-      image: null,
-      talla: 'M',
-      petName: null,
-      productInfo: {}
-    };
-    addToCart(sampleProduct, 1);
   };
 
   const sendBankingDetailsEmail = async (orderData) => {
@@ -625,11 +571,31 @@ const CartScreen = ({ navigation }) => {
 
   if (loading && currentStep !== 'payment') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#f8f9fa' }]}>
         <StatusBar barStyle="dark-content" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#D2691E" />
-          <Text style={styles.loadingText}>Cargando carrito...</Text>
+        <View style={[styles.loadingContainer, { justifyContent: 'center', alignItems: 'center', flex: 1 }]}>
+          <View style={{
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            backgroundColor: '#609dd5',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 30,
+            shadowColor: '#609dd5',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 8
+          }}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+          <Text style={[styles.loadingText, { fontSize: 18, fontWeight: '600', color: '#609dd5', letterSpacing: 0.5 }]}>
+            Cargando carrito...
+          </Text>
+          <Text style={{ marginTop: 12, color: '#9ca3af', fontSize: 14 }}>
+            Un momento por favor
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -693,7 +659,7 @@ const CartScreen = ({ navigation }) => {
                 });
                 setCurrentStep('cart');
                 setErrors({});
-                navigation.navigate('Home');
+                navigation.navigate('HomeScreen');
               }}
             >
               <Text style={styles.continueButtonText}>Volver al catálogo</Text>
@@ -719,15 +685,8 @@ const CartScreen = ({ navigation }) => {
               </Text>
               
               <TouchableOpacity 
-                style={styles.sampleButton}
-                onPress={addSampleProduct}
-              >
-                <Text style={styles.sampleButtonText}>+ Agregar Producto de Ejemplo</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
                 style={styles.primaryButton}
-                onPress={() => navigation.navigate('Home')}
+                onPress={() => navigation.navigate('Inicio')}
               >
                 <Text style={styles.primaryButtonText}>Ir al catálogo</Text>
               </TouchableOpacity>

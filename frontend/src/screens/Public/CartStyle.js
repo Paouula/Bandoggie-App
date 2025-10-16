@@ -27,16 +27,16 @@ export const styles = StyleSheet.create({
 
   // === CARRITO - PANTALLA 1 ===
   cartHeader: {
-    backgroundColor: '#D2691E',
-    paddingTop: 10,
-    paddingBottom: 20,
+    backgroundColor: '#eb74a9',
+    paddingTop: 7,
+    paddingBottom: 7,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
   cartHeaderText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 23,
     color: 'white',
+    fontFamily: 'BalooBhaijaan2_700Bold',
   },
   emptyCartContainer: {
     backgroundColor: 'white',
