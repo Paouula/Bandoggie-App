@@ -10,17 +10,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import useFetchHolidays from '../../hooks/Holidays/useFetchHolidays'; 
+import { API_FETCH_JSON } from '../../config';
 
 const { width } = Dimensions.get('window');
 
 export default function MainScreen({ navigation }) {
-  // Estados para manejar las festividades
   const [holidays, setHolidays] = useState([]);
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(true);
-  
-  // Hook personalizado para las festividades
-  const { handleGetHolidays } = useFetchHolidays();
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -32,76 +28,106 @@ export default function MainScreen({ navigation }) {
     });
   }, [navigation]);
 
-  // Cargar festividades
   useEffect(() => {
-    loadHolidays();
+    fetchHolidaysFromAPI();
   }, []);
 
-  const loadHolidays = async () => {
+  // NUEVA FUNCIÓN SIMPLIFICADA
+  const fetchHolidaysFromAPI = async () => {
     try {
       setIsLoadingHolidays(true);
-      const data = await handleGetHolidays();
+      console.log('🚀 NUEVA CARGA: Solicitando /Holiday...');
       
-      if (data && Array.isArray(data)) {
-        const mappedHolidays = data.map((holiday, index) => ({
-          id: holiday._id || holiday.id || index + 1,
-          title: holiday.nameHoliday || 'Sin nombre',
-          color: getDefaultColor(index),
-          icon: getIconForHoliday(holiday.nameCategory),
-          image: getDefaultImage(index), // Imagen por defecto porque en la base no hay imagenes :(
-          screen: 'FestivitiesScreen',
-          nameCategory: holiday.nameCategory,
-        }));
-        
-        setHolidays(mappedHolidays);
-      } else {
-        console.warn('No se recibieron festividades válidas:', data);
+      const response = await API_FETCH_JSON('Holiday');
+      console.log('✅ Respuesta completa:', JSON.stringify(response, null, 2));
+
+      if (!response || !Array.isArray(response)) {
+        console.error('❌ La respuesta no es un array:', response);
         setHolidays([]);
+        return;
       }
+
+      console.log(`📦 ${response.length} festividades recibidas`);
+
+      // Configuración visual de festividades
+      const visualConfig = {
+        'Navidad': { color: '#E63946', icon: 'gift', image: require('../../../assets/Home/Dog2.png') },
+        ' Navidad': { color: '#E63946', icon: 'gift', image: require('../../../assets/Home/Dog2.png') },
+        'Halloween': { color: '#FF9F43', icon: 'skull', image: require('../../../assets/Home/Dog.png') },
+        'San Valentín': { color: '#FFB3D9', icon: 'heart', image: require('../../../assets/Home/Dog3.png') },
+        'Días patrios': { color: '#4299E1', icon: 'flag', image: require('../../../assets/Home/Dog4.png') },
+        'Cumpleaños': { color: '#ffdd00ff', icon: 'balloon', image: require('../../../assets/Home/Dog5.png') },
+        'Año Nuevo': { color: '#9F7AEA', icon: 'star', image: require('../../../assets/Home/Dog6.png') },
+      };
+
+      const defaultColors = ['#E63946', '#FF9F43', '#FFB3D9', '#4299E1', '#9F7AEA', '#ffdd00ff'];
+      const defaultImages = [
+        require('../../../assets/Home/Dog.png'),
+        require('../../../assets/Home/Dog2.png'),
+        require('../../../assets/Home/Dog3.png'),
+        require('../../../assets/Home/Dog4.png'),
+        require('../../../assets/Home/Dog5.png'),
+        require('../../../assets/Home/Dog6.png'),
+      ];
+
+      // Orden deseado de festividades
+      const desiredOrder = ['Navidad', ' Navidad', 'Halloween', 'San Valentín', 'Días patrios', 'Cumpleaños', 'Año Nuevo'];
+
+      const processed = response
+        .filter(h => {
+          const name = h.nameHoliday?.trim();
+          const isValid = name && 
+                         name !== 'Sin festividad' && 
+                         name !== ' Sin festividad' &&
+                         name !== 'Dia del Padre';
+          if (!isValid) console.log(`🚫 Filtrando: "${name}"`);
+          return isValid;
+        })
+        .sort((a, b) => {
+          // Ordenar según el array desiredOrder
+          const indexA = desiredOrder.indexOf(a.nameHoliday);
+          const indexB = desiredOrder.indexOf(b.nameHoliday);
+          
+          // Si ambos están en el orden deseado, ordenar según su posición
+          if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+          }
+          // Si solo uno está en el orden, ese va primero
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          // Si ninguno está, mantener orden original
+          return 0;
+        })
+        .map((h, idx) => {
+          const name = h.nameHoliday.trim();
+          const visual = visualConfig[name];
+          
+          const result = {
+            id: h._id,
+            title: name,
+            color: visual?.color || defaultColors[idx % defaultColors.length],
+            icon: visual?.icon || 'star',
+            image: visual?.image || defaultImages[idx % defaultImages.length],
+            screen: 'FestivitiesScreen',
+            nameCategory: name,
+            holidayCode: h._id,
+          };
+          
+          console.log(`✨ Procesado: ${name} → Color: ${result.color}`);
+          return result;
+        });
+
+      console.log(`🎉 RESULTADO FINAL: ${processed.length} festividades procesadas`);
+      setHolidays(processed);
+
     } catch (error) {
-      console.error('Error al cargar festividades:', error);
+      console.error('💥 ERROR CRÍTICO:', error);
+      console.error('Stack:', error.stack);
       setHolidays([]);
     } finally {
       setIsLoadingHolidays(false);
+      console.log('🏁 Proceso completado');
     }
-  };
-
-  // Función para obtener colores
-  const getDefaultColor = (index) => {
-    const colors = ['#FF6B6B', '#FF9F43', '#FFB3D9', '#4299E1', '#9F7AEA', '#F6AD55'];
-    return colors[index % colors.length];
-  };
-
-  // Función para obtener íconos basados en el nombre de la festividad
-  const getIconForHoliday = (name) => {
-    if (!name) return 'star';
-    
-    const lowercaseName = name.toLowerCase();
-    
-    if (lowercaseName.includes('navidad') || lowercaseName.includes('christmas')) return 'gift';
-    if (lowercaseName.includes('halloween')) return 'skull';
-    if (lowercaseName.includes('valentín') || lowercaseName.includes('valentine')) return 'heart';
-    if (lowercaseName.includes('patrios') || lowercaseName.includes('independencia')) return 'flag';
-    if (lowercaseName.includes('año nuevo') || lowercaseName.includes('new year')) return 'star';
-    if (lowercaseName.includes('cumpleaños') || lowercaseName.includes('birthday')) return 'balloon';
-    if (lowercaseName.includes('pascua') || lowercaseName.includes('easter')) return 'flower';
-    if (lowercaseName.includes('madre') || lowercaseName.includes('mother')) return 'heart';
-    if (lowercaseName.includes('padre') || lowercaseName.includes('father')) return 'person';
-    
-    return 'star'; // ícono por defecto
-  };
-
-  // Función para obtener imágenes por defecto si no hay imagen en la BD
-  const getDefaultImage = (index) => {
-    const images = [
-      require('../../../assets/Home/Dog.png'),
-      require('../../../assets/Home/Dog2.png'),
-      require('../../../assets/Home/Dog3.png'),
-      require('../../../assets/Home/Dog4.png'),
-      require('../../../assets/Home/Dog5.png'),
-      require('../../../assets/Home/Dog6.png'),
-    ];
-    return images[index % images.length];
   };
 
   const categories = [
@@ -131,7 +157,6 @@ export default function MainScreen({ navigation }) {
     },
   ];
 
-  // Función para determinar la pantalla a navegar para categorías principales
   const getNavigationRoute = (title) => {
     switch(title) {
       case 'Bandanas':
@@ -145,25 +170,23 @@ export default function MainScreen({ navigation }) {
     }
   };
 
-  // Función para manejar la navegación de festividades
   const handleFestivityPress = (festivity) => {
-    console.log(`Navegando a ${festivity.screen} para ${festivity.title}`);
+    console.log(`➡️ Navegando a ${festivity.title}`);
     
     try {
-      // Navegar a la pantalla de festividades con parámetros
       navigation.navigate(festivity.screen, {
         festivityName: festivity.title,
         festivityId: festivity.id,
         festivityColor: festivity.color,
-        nameCategory: festivity.nameCategory, // Campo original de la BD
+        nameCategory: festivity.nameCategory,
+        holidayCode: festivity.holidayCode,
       });
     } catch (error) {
-      console.error('Error al navegar:', error);
+      console.error('❌ Error al navegar:', error);
       navigation.navigate('FestivitiesScreen');
     }
   };
 
-  // Función para renderizar el contenido de festividades
   const renderHolidaysContent = () => {
     if (isLoadingHolidays) {
       return (
@@ -181,7 +204,7 @@ export default function MainScreen({ navigation }) {
           <Text style={styles.emptyText}>No hay festividades disponibles</Text>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={loadHolidays}
+            onPress={fetchHolidaysFromAPI}
           >
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
@@ -204,16 +227,11 @@ export default function MainScreen({ navigation }) {
             activeOpacity={0.8}
           >
             <View style={styles.seasonalImageContainer}>
-              {/* Imagen de festividad o ícono de respaldo */}
               {category.image ? (
                 <Image 
                   source={category.image} 
                   style={styles.seasonalImage}
                   resizeMode="contain"
-                  onError={() => {
-                    // Si hay error al cargar la imagen de la BD, usar imagen por defecto
-                    console.warn(`Error al cargar imagen para ${category.title}`);
-                  }}
                 />
               ) : (
                 <View style={styles.seasonalImagePlaceholder}>
@@ -232,7 +250,6 @@ export default function MainScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header Section */}
       <View style={styles.headerSection}>
         <Text style={styles.mainTitle}>BANDOGGIE</Text>
         <Text style={styles.subtitle}>
@@ -243,19 +260,15 @@ export default function MainScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Categories Section */}
       <Text style={styles.sectionTitle}>Categorías</Text>
 
-      {/* Main Categories */}
       {categories.map((category, index) => (
         <TouchableOpacity
           key={category.id}
           style={[styles.categoryCard, { marginBottom: 20 }]}
           onPress={() => {
-            // Navegar cuando se toca toda la card
             const route = getNavigationRoute(category.title);
             navigation.navigate(route);
-            console.log(`Navigating to ${route} from card`);
           }}
         >
           <View style={[styles.categoryContent, { backgroundColor: category.color }]}>
@@ -265,18 +278,15 @@ export default function MainScreen({ navigation }) {
               <TouchableOpacity 
                 style={styles.seeMoreButton}
                 onPress={(e) => {
-                  // Evitar que se propague el evento al TouchableOpacity padre
                   e.stopPropagation();
                   const route = getNavigationRoute(category.title);
                   navigation.navigate(route);
-                  console.log(`Navigating to ${route} from Ver más button`);
                 }}
               >
                 <Text style={styles.seeMoreText}>Ver más</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.categoryImageContainer}>
-              {/* Imagen del perro o placeholder */}
               {category.image ? (
                 <Image 
                   source={category.image} 
@@ -293,15 +303,12 @@ export default function MainScreen({ navigation }) {
         </TouchableOpacity>
       ))}
 
-      {/* Seasonal Categories */}
       <View style={styles.festivitiesHeader}>
         <Text style={styles.sectionTitle}>Festividades</Text>
       </View>
 
-      {/* Render holidays content */}
       {renderHolidaysContent()}
 
-      {/* Espacio adicional al final */}
       <View style={{ height: 30 }} />
     </ScrollView>
   );
@@ -357,11 +364,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
     paddingRight: 20,
-  },
-  refreshButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
   },
   categoryCard: {
     marginHorizontal: 20,
@@ -473,7 +475,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  // Nuevos estilos para estados de carga y error
   loadingContainer: {
     alignItems: 'center',
     padding: 40,
