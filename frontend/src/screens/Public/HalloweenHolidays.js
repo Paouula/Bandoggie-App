@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,37 +15,70 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useProductsWithLocalFilter } from '../../hooks/Products/useFetchProducts';
+import useFetchProducts from '../../hooks/Products/useFetchProducts';
 
 const { width } = Dimensions.get('window');
 
 const HalloweenHolidays = ({ navigation, route }) => {
   const [searchText, setSearchText] = useState('');
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const { handleGetProducts } = useFetchProducts();
   
   const holidayName = route?.params?.holidayName || 'Halloween';
   const holidayId = route?.params?.holidayId || null;
   const holidayColor = route?.params?.holidayColor || '#FF6B6B';
 
-  const {
-    products: filteredProducts,
-    loading,
-    error,
-    refetch,
-    filterProducts,
-    clearFilter,
-    isFiltered,
-    totalCount,
-    filteredCount,
-  } = useProductsWithLocalFilter(holidayId);
+  useEffect(() => {
+    loadHolidayProducts();
+  }, [holidayId]);
+
+  useEffect(() => {
+    // Filtrar productos basado en la búsqueda
+    if (searchText.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.nameProduct?.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.idCategory?.nameCategory?.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchText, products]);
+
+  const loadHolidayProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const allProducts = await handleGetProducts();
+      const holidayProducts = allProducts.filter(product => {
+        const productHolidayId = 
+          product.idHolidayProduct?._id || 
+          product.idHolidayProduct;
+        return productHolidayId === holidayId;
+      });
+      
+      setProducts(holidayProducts);
+      setFilteredProducts(holidayProducts);
+    } catch (err) {
+      setError(err.message || 'Error al cargar productos');
+      console.error('Error loading holiday products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (text) => {
     setSearchText(text);
-    filterProducts(text);
   };
 
   const handleClearSearch = () => {
     setSearchText('');
-    clearFilter();
   };
 
   const handleProductPress = (product) => {
@@ -62,7 +95,7 @@ const HalloweenHolidays = ({ navigation, route }) => {
   const showErrorAlert = () => {
     Alert.alert('Error de conexión', error, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Reintentar', onPress: refetch }
+      { text: 'Reintentar', onPress: loadHolidayProducts }
     ]);
   };
 
@@ -112,7 +145,7 @@ const HalloweenHolidays = ({ navigation, route }) => {
           <Ionicons name="search" size={18} color="#999" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar..."
+            placeholder="Buscar productos..."
             value={searchText}
             onChangeText={handleSearch}
             placeholderTextColor="#999"
@@ -124,7 +157,9 @@ const HalloweenHolidays = ({ navigation, route }) => {
           )}
         </View>
 
-        {loading && <ActivityIndicator size="small" color="#FFA500" style={{ marginLeft: 10 }} />}
+        {loading && filteredProducts.length > 0 && (
+          <ActivityIndicator size="small" color="#FFA500" style={{ marginLeft: 10 }} />
+        )}
       </View>
 
       {/* Banner */}
@@ -135,7 +170,7 @@ const HalloweenHolidays = ({ navigation, route }) => {
             Lindas prendas para tu mascota
           </Text>
           <Text style={styles.bannerCount}>
-            {isFiltered ? filteredCount : totalCount} productos
+            {searchText.trim() ? filteredProducts.length : products.length} productos
           </Text>
         </View>
         <Image
@@ -158,9 +193,11 @@ const HalloweenHolidays = ({ navigation, route }) => {
       {/* Título */}
       <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>
-          {isFiltered ? 'Resultados' : `Productos de ${holidayName}`}
+          {searchText.trim() ? 'Resultados' : `Productos de ${holidayName}`}
         </Text>
-        {isFiltered && <Text style={styles.count}>{filteredCount}/{totalCount}</Text>}
+        {searchText.trim() && (
+          <Text style={styles.count}>{filteredProducts.length}/{products.length}</Text>
+        )}
       </View>
     </View>
   );
@@ -168,25 +205,25 @@ const HalloweenHolidays = ({ navigation, route }) => {
   const EmptyComponent = () => (
     <View style={styles.empty}>
       <Ionicons 
-        name={isFiltered ? "search" : "sad-outline"} 
+        name={searchText.trim() ? "search" : "sad-outline"} 
         size={50} 
         color="#ddd" 
       />
       <Text style={styles.emptyTitle}>
-        {isFiltered ? 'Sin resultados' : 'No hay productos'}
+        {searchText.trim() ? 'Sin resultados' : 'No hay productos'}
       </Text>
       <Text style={styles.emptyText}>
-        {isFiltered 
+        {searchText.trim()
           ? `No encontramos productos con "${searchText}"`
           : `No hay productos de ${holidayName}`
         }
       </Text>
       <TouchableOpacity 
         style={styles.emptyBtn}
-        onPress={isFiltered ? handleClearSearch : refetch}
+        onPress={searchText.trim() ? handleClearSearch : loadHolidayProducts}
       >
         <Text style={styles.emptyBtnText}>
-          {isFiltered ? 'Limpiar búsqueda' : 'Reintentar'}
+          {searchText.trim() ? 'Limpiar búsqueda' : 'Reintentar'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -199,7 +236,7 @@ const HalloweenHolidays = ({ navigation, route }) => {
       {loading && filteredProducts.length === 0 ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color="#FFA500" />
-          <Text style={styles.loadingText}>Cargando...</Text>
+          <Text style={styles.loadingText}>Cargando productos...</Text>
         </View>
       ) : (
         <FlatList
@@ -215,7 +252,7 @@ const HalloweenHolidays = ({ navigation, route }) => {
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={refetch}
+              onRefresh={loadHolidayProducts}
               colors={['#FFA500']}
               tintColor="#FFA500"
             />

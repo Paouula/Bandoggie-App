@@ -32,9 +32,11 @@ export default function FestivitiesScreen({ navigation, route }) {
   const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const festivityId = route?.params?.festivityId;
   const festivityName = route?.params?.festivityName || 'Festividad';
@@ -49,6 +51,19 @@ export default function FestivitiesScreen({ navigation, route }) {
     const unsubscribe = navigation.addListener('focus', updateCartCount);
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    // Filtrar productos basado en la búsqueda
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.nameProduct?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
 
   const updateCartCount = async () => {
     try {
@@ -80,6 +95,7 @@ export default function FestivitiesScreen({ navigation, route }) {
       });
       
       setProducts(festivityProducts);
+      setFilteredProducts(festivityProducts);
     } catch (err) {
       setError(err.message);
       console.error('Error loading festivity products:', err);
@@ -266,16 +282,54 @@ export default function FestivitiesScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {products.length === 0 ? (
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar productos..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {filteredProducts.length === 0 ? (
           <View style={styles.noProductsContainer}>
-            <Text style={styles.noProductsText}>No hay productos disponibles para {festivityName}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadFestivityProducts}>
-              <Text style={styles.retryButtonText}>Actualizar</Text>
-            </TouchableOpacity>
+            <Ionicons name="search-outline" size={64} color="#ccc" />
+            <Text style={styles.noProductsText}>
+              {searchQuery 
+                ? 'No se encontraron productos' 
+                : `No hay productos disponibles para ${festivityName}`
+              }
+            </Text>
+            {searchQuery ? (
+              <TouchableOpacity 
+                style={styles.clearSearchButton} 
+                onPress={() => setSearchQuery('')}
+              >
+                <Text style={styles.clearSearchButtonText}>Limpiar búsqueda</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.retryButton} onPress={loadFestivityProducts}>
+                <Text style={styles.retryButtonText}>Actualizar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
-          <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-            {products.map((product) => (
+          <ScrollView 
+            style={styles.productsList} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {filteredProducts.map((product) => (
               <TouchableOpacity
                 key={product._id}
                 style={styles.productCard}
@@ -589,6 +643,32 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   noProductsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -599,7 +679,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginTop: 15,
     marginBottom: 20,
+  },
+  clearSearchButton: {
+    backgroundColor: '#2c5aa0',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  clearSearchButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
   },
   productsList: {
     flex: 1,
@@ -900,9 +991,20 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   addToCartText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-      },
-    });
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  buyNowButton: {
+    backgroundColor: '#2c5aa0',
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  buyNowText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});

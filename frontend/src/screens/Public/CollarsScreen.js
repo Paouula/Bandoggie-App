@@ -29,8 +29,10 @@ export default function CollarScreen({ navigation }) {
   const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { handleGetProducts } = useFetchProducts();
 
@@ -38,15 +40,26 @@ export default function CollarScreen({ navigation }) {
     loadCollarsProducts();
   }, []);
 
+  useEffect(() => {
+    // Filtrar productos basado en la búsqueda
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.nameProduct?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
+
   const loadCollarsProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Obtener todos los productos
       const allProducts = await handleGetProducts();
       
-      // Filtrar productos que contengan "collar" en el nombre o categoría
       const collarsProducts = allProducts.filter(product => {
         const name = product.nameProduct?.toLowerCase() || '';
         const categoryName = product.categoryName?.toLowerCase() || '';
@@ -54,6 +67,7 @@ export default function CollarScreen({ navigation }) {
       });
       
       setProducts(collarsProducts);
+      setFilteredProducts(collarsProducts);
     } catch (err) {
       setError(err.message);
       console.error('Error loading collars:', err);
@@ -62,7 +76,6 @@ export default function CollarScreen({ navigation }) {
     }
   };
 
-  // Función para procesar los datos del producto de la API
   const processProductData = (product) => {
     return {
       id: product._id,
@@ -107,69 +120,95 @@ export default function CollarScreen({ navigation }) {
     }
   };
 
- const addToCart = async () => {
-  try {
-    // Preparar el item para el carrito
-    const cartItem = {
-      _id: selectedProduct.id,
-      id: selectedProduct.id,
-      name: selectedProduct.title,
-      nameProduct: selectedProduct.title,
-      price: selectedProduct.price,
-      quantity: quantity,
-      subtotal: selectedProduct.price * quantity,
-      talla: selectedSize,
-      color: selectedProduct.colors[selectedColor]?.name || null,
-      image: selectedProduct.image.uri,
-      productInfo: {
-        description: selectedProduct.description,
-        designImages: selectedProduct.images.map(img => img.uri)
+  const addToCart = async () => {
+    try {
+      if (!selectedProduct) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No hay producto seleccionado'
+        });
+        return;
       }
-    };
 
-    // Obtener carrito actual
-    const savedCart = await AsyncStorage.getItem('bandoggie_cart');
-    let currentCart = [];
-    
-    if (savedCart) {
-      currentCart = JSON.parse(savedCart);
+      const cartItem = {
+        _id: selectedProduct.id || selectedProduct._id,
+        id: selectedProduct.id || selectedProduct._id,
+        name: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+        nameProduct: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+        price: parseFloat(selectedProduct.price) || 0,
+        quantity: parseInt(quantity) || 1,
+        subtotal: (parseFloat(selectedProduct.price) || 0) * (parseInt(quantity) || 1),
+        talla: selectedSize || 'M',
+        color: selectedProduct.colors?.[selectedColor]?.name || null,
+        image: selectedProduct.image?.uri || selectedProduct.image || null,
+        petName: nameFieldEnabled ? petName : null,
+        productInfo: {
+          description: selectedProduct.description || '',
+          designImages: selectedProduct.images?.map(img => img.uri || img) || []
+        }
+      };
+
+      const savedCart = await AsyncStorage.getItem('bandoggie_cart');
+      let currentCart = [];
+      
+      if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
+        try {
+          currentCart = JSON.parse(savedCart);
+          if (!Array.isArray(currentCart)) {
+            currentCart = [];
+          }
+        } catch (e) {
+          console.error('Error parsing cart:', e);
+          currentCart = [];
+        }
+      }
+
+      currentCart.push(cartItem);
+      await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
+
+      Toast.show({
+        type: 'success',
+        text1: 'Éxito',
+        text2: `${cartItem.name} agregado al carrito`
+      });
+
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No se pudo agregar al carrito'
+      });
     }
-
-    // Agregar nuevo item
-    currentCart.push(cartItem);
-
-    // Guardar carrito actualizado
-    await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
-
-    // Mostrar toast de éxito
-    Toast.show({
-      type: 'success',
-      text1: 'Éxito',
-      text2: `${selectedProduct.title} agregado al carrito`
-    });
-
-    console.log('✅ Producto agregado al carrito:', cartItem);
-  } catch (error) {
-    console.error('Error al agregar al carrito:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'No se pudo agregar al carrito'
-    });
-  }
-};
- 
+  };
 
   // Vista de lista de productos
   if (currentView === 'list') {
     return (
       <SafeAreaView style={styles.container}>
+        {/* Header con título */}
         <View style={styles.header}>
-  
           <Text style={styles.headerTitle}>Collares</Text>
-          <TouchableOpacity>
-            <Ionicons name="search" size={24} color="#333" />
-          </TouchableOpacity>
+        </View>
+
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar collares..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {loading ? (
@@ -185,17 +224,33 @@ export default function CollarScreen({ navigation }) {
               <Text style={styles.retryButtonText}>Reintentar</Text>
             </TouchableOpacity>
           </View>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay collares disponibles</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadCollarsProducts}>
-              <Text style={styles.retryButtonText}>Actualizar</Text>
-            </TouchableOpacity>
+            <Ionicons name="search-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>
+              {searchQuery ? 'No se encontraron collares' : 'No hay collares disponibles'}
+            </Text>
+            {searchQuery ? (
+              <TouchableOpacity 
+                style={styles.clearSearchButton} 
+                onPress={() => setSearchQuery('')}
+              >
+                <Text style={styles.clearSearchButtonText}>Limpiar búsqueda</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.retryButton} onPress={loadCollarsProducts}>
+                <Text style={styles.retryButtonText}>Actualizar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
-          <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.productsList} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             <View style={styles.productsGrid}>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <TouchableOpacity
                   key={product._id}
                   style={styles.productCard}
@@ -221,12 +276,14 @@ export default function CollarScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={goBackToList}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalle del Producto</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
-        {/* Imagen principal del producto */}
         <View style={styles.mainImageContainer}>
           <Image 
             source={selectedProduct.images[selectedImageIndex]} 
@@ -235,7 +292,6 @@ export default function CollarScreen({ navigation }) {
           />
         </View>
 
-        {/* Imágenes pequeñas */}
         <View style={styles.thumbnailContainer}>
           {selectedProduct.images.map((image, index) => (
             <TouchableOpacity
@@ -255,12 +311,10 @@ export default function CollarScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Información del producto */}
         <View style={styles.productInfo}>
           <Text style={styles.detailTitle}>{selectedProduct.title}</Text>
           <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct.price).toFixed(2)}</Text>
           
-          {/* Rating */}
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingNumber}>{selectedProduct.rating}</Text>
             <View style={styles.starsContainer}>
@@ -276,10 +330,8 @@ export default function CollarScreen({ navigation }) {
             <Text style={styles.reviewsText}>({selectedProduct.reviews} evaluaciones)</Text>
           </View>
 
-          {/* Descripción */}
           <Text style={styles.description}>{selectedProduct.description}</Text>
 
-          {/* Diseño (Colores) */}
           <Text style={styles.sectionTitle}>Diseño</Text>
           <View style={styles.colorsContainer}>
             {selectedProduct.colors.map((color, index) => (
@@ -295,7 +347,6 @@ export default function CollarScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Talla */}
           <Text style={styles.sectionTitle}>Talla</Text>
           <View style={styles.sizesContainer}>
             {selectedProduct.sizes.map((size) => (
@@ -315,7 +366,6 @@ export default function CollarScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Guía de tallas */}
           <TouchableOpacity 
             style={styles.sizeGuide}
             onPress={() => setShowSizeGuide(true)}
@@ -324,7 +374,6 @@ export default function CollarScreen({ navigation }) {
             <Text style={styles.sizeGuideText}>Guía de tallas</Text>
           </TouchableOpacity>
 
-          {/* Modal/Overlay para la guía de tallas */}
           {showSizeGuide && (
             <View style={styles.sizeGuideOverlay}>
               <View style={styles.sizeGuideModal}>
@@ -343,7 +392,6 @@ export default function CollarScreen({ navigation }) {
             </View>
           )}
 
-          {/* Nombre del perrito */}
           <View style={styles.nameContainer}>
             <Text style={styles.sectionTitle}>Nombre</Text>
             <TouchableOpacity 
@@ -367,7 +415,6 @@ export default function CollarScreen({ navigation }) {
             />
           )}
 
-          {/* Cantidad */}
           <Text style={styles.sectionTitle}>Cantidad</Text>
           <View style={styles.quantityContainer}>
             <TouchableOpacity 
@@ -389,12 +436,11 @@ export default function CollarScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Botones de acción con cantidad integrada */}
-     <View style={styles.actionButtons}>
-  <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
-    <Text style={styles.addToCartText}>Añadir al carrito</Text>
-  </TouchableOpacity>
-</View>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
+          <Text style={styles.addToCartText}>Añadir al carrito</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -404,25 +450,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
- header: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingHorizontal: 20,
-  paddingVertical: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: '#E0E0E0',
-  marginTop: -40,
-},
-headerTitle: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  textAlign: 'center',
-  fontSize: 18,
-  fontWeight: 'bold',
-  color: '#333',
-},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -470,7 +539,18 @@ headerTitle: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginTop: 15,
     marginBottom: 20,
+  },
+  clearSearchButton: {
+    backgroundColor: '#FF9F43',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  clearSearchButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
   },
   productsList: {
     flex: 1,
@@ -495,11 +575,11 @@ headerTitle: {
     width: (width - 40) / 2,
   },
   addToCartButtonFull: {
-  backgroundColor: '#FF9F43',
-  paddingVertical: 15,
-  borderRadius: 25,
-  width: '100%',
-},
+    backgroundColor: '#FF9F43',
+    paddingVertical: 15,
+    borderRadius: 25,
+    width: '100%',
+  },
   productImage: {
     width: '100%',
     height: 150,
@@ -741,27 +821,7 @@ headerTitle: {
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  
-  actionButtonsContainer: {
-    gap: 10,
-  },
-  addToCartButton: {
-    backgroundColor: '#FF9F43',
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
   addToCartText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  buyNowButton: {
-    backgroundColor: '#FFB3D9',
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
-  buyNowText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',

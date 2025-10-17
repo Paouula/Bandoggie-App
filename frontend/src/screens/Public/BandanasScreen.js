@@ -34,22 +34,35 @@ export default function BandanasScreen({ navigation }) {
   const [nameFieldEnabled, setNameFieldEnabled] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadBandanasProducts();
   }, []);
+
+  useEffect(() => {
+    // Filtrar productos basado en la búsqueda
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.nameProduct?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
 
   const loadBandanasProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Obtener todos los productos
       const allProducts = await handleGetProducts();
       
-      // Filtrar productos que contengan "bandana" en el nombre o categoría
       const bandanasProducts = allProducts.filter(product => {
         const name = product.nameProduct?.toLowerCase() || '';
         const categoryName = product.categoryName?.toLowerCase() || '';
@@ -57,6 +70,7 @@ export default function BandanasScreen({ navigation }) {
       });
       
       setProducts(bandanasProducts);
+      setFilteredProducts(bandanasProducts);
     } catch (err) {
       setError(err.message);
       console.error('Error loading bandanas:', err);
@@ -88,84 +102,68 @@ export default function BandanasScreen({ navigation }) {
     }
   };
 
- const addToCart = async () => {
-  try {
-    // Validar que selectedProduct existe
-    if (!selectedProduct) {
+  const addToCart = async () => {
+    try {
+      if (!selectedProduct) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'No hay producto seleccionado'
+        });
+        return;
+      }
+
+      const cartItem = {
+        _id: selectedProduct.id || selectedProduct._id,
+        id: selectedProduct.id || selectedProduct._id,
+        name: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+        nameProduct: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+        price: parseFloat(selectedProduct.price) || 0,
+        quantity: parseInt(quantity) || 1,
+        subtotal: (parseFloat(selectedProduct.price) || 0) * (parseInt(quantity) || 1),
+        talla: selectedSize || 'M',
+        color: selectedProduct.colors?.[selectedColor]?.name || null,
+        image: selectedProduct.image?.uri || selectedProduct.image || null,
+        petName: nameFieldEnabled ? petName : null,
+        productInfo: {
+          description: selectedProduct.description || '',
+          designImages: selectedProduct.images?.map(img => img.uri || img) || []
+        }
+      };
+
+      const savedCart = await AsyncStorage.getItem('bandoggie_cart');
+      let currentCart = [];
+      
+      if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
+        try {
+          currentCart = JSON.parse(savedCart);
+          if (!Array.isArray(currentCart)) {
+            currentCart = [];
+          }
+        } catch (e) {
+          console.error('Error parsing cart:', e);
+          currentCart = [];
+        }
+      }
+
+      currentCart.push(cartItem);
+      await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
+
+      Toast.show({
+        type: 'success',
+        text1: 'Éxito',
+        text2: `${cartItem.name} agregado al carrito`
+      });
+
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'No hay producto seleccionado'
+        text2: 'No se pudo agregar al carrito'
       });
-      return;
     }
-
-    console.log('📦 Producto a agregar:', selectedProduct);
-
-    // Preparar el item para el carrito con validaciones
-    const cartItem = {
-      _id: selectedProduct.id || selectedProduct._id,
-      id: selectedProduct.id || selectedProduct._id,
-      name: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
-      nameProduct: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
-      price: parseFloat(selectedProduct.price) || 0,
-      quantity: parseInt(quantity) || 1,
-      subtotal: (parseFloat(selectedProduct.price) || 0) * (parseInt(quantity) || 1),
-      talla: selectedSize || 'M',
-      color: selectedProduct.colors?.[selectedColor]?.name || null,
-      image: selectedProduct.image?.uri || selectedProduct.image || null,
-      productInfo: {
-        description: selectedProduct.description || '',
-        designImages: selectedProduct.images?.map(img => img.uri || img) || []
-      }
-    };
-
-    console.log('✅ Item preparado:', cartItem);
-
-    // Obtener carrito actual
-    const savedCart = await AsyncStorage.getItem('bandoggie_cart');
-    let currentCart = [];
-    
-    if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
-      try {
-        currentCart = JSON.parse(savedCart);
-        if (!Array.isArray(currentCart)) {
-          currentCart = [];
-        }
-      } catch (e) {
-        console.error('Error parsing cart:', e);
-        currentCart = [];
-      }
-    }
-
-    console.log('🛒 Carrito actual:', currentCart);
-
-    // Agregar nuevo item
-    currentCart.push(cartItem);
-
-    // Guardar carrito actualizado
-    await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
-
-    console.log('💾 Carrito guardado con', currentCart.length, 'items');
-
-    // Mostrar toast de éxito
-    Toast.show({
-      type: 'success',
-      text1: 'Éxito',
-      text2: `${cartItem.name} agregado al carrito`
-    });
-
-  } catch (error) {
-    console.error('❌ Error al agregar al carrito:', error);
-    console.error('Stack:', error.stack);
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'No se pudo agregar al carrito'
-    });
-  }
-};
-  
+  };
 
   if (loading) {
     return (
@@ -196,24 +194,57 @@ export default function BandanasScreen({ navigation }) {
   if (currentView === 'list') {
     return (
       <SafeAreaView style={styles.container}>
+        {/* Header con título */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Bandanas</Text>
-          <TouchableOpacity>
-            <Ionicons name="search" size={24} color="#333" />
-          </TouchableOpacity>
         </View>
 
-        {products.length === 0 ? (
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar bandanas..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {filteredProducts.length === 0 ? (
           <View style={styles.noProductsContainer}>
-            <Text style={styles.noProductsText}>No hay bandanas disponibles</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadBandanasProducts}>
-              <Text style={styles.retryButtonText}>Actualizar</Text>
-            </TouchableOpacity>
+            <Ionicons name="search-outline" size={64} color="#ccc" />
+            <Text style={styles.noProductsText}>
+              {searchQuery ? 'No se encontraron bandanas' : 'No hay bandanas disponibles'}
+            </Text>
+            {searchQuery ? (
+              <TouchableOpacity 
+                style={styles.clearSearchButton} 
+                onPress={() => setSearchQuery('')}
+              >
+                <Text style={styles.clearSearchButtonText}>Limpiar búsqueda</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.retryButton} onPress={loadBandanasProducts}>
+                <Text style={styles.retryButtonText}>Actualizar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
-          <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.productsList} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             <View style={styles.productsGrid}>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <TouchableOpacity
                   key={product._id}
                   style={styles.productCard}
@@ -235,7 +266,7 @@ export default function BandanasScreen({ navigation }) {
     );
   }
 
-  // Vista de detalle del producto - manteniendo el diseño original
+  // Vista de detalle del producto
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -247,7 +278,6 @@ export default function BandanasScreen({ navigation }) {
       </View>
 
       <ScrollView style={styles.detailContainer} showsVerticalScrollIndicator={false}>
-        {/* Imagen principal del producto */}
         <View style={styles.mainImageContainer}>
           <Image 
             source={{ 
@@ -258,7 +288,6 @@ export default function BandanasScreen({ navigation }) {
           />
         </View>
 
-        {/* Imágenes pequeñas */}
         {selectedProduct?.designImages && selectedProduct.designImages.length > 0 && (
           <View style={styles.thumbnailContainer}>
             {selectedProduct.designImages.map((image, index) => (
@@ -280,12 +309,10 @@ export default function BandanasScreen({ navigation }) {
           </View>
         )}
 
-        {/* Información del producto */}
         <View style={styles.productInfo}>
           <Text style={styles.detailTitle}>{selectedProduct?.nameProduct}</Text>
           <Text style={styles.detailPrice}>Desde ${parseFloat(selectedProduct?.price || 0).toFixed(2)}</Text>
           
-          {/* Rating */}
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingNumber}>5.0</Text>
             <View style={styles.starsContainer}>
@@ -301,12 +328,10 @@ export default function BandanasScreen({ navigation }) {
             <Text style={styles.reviewsText}>(15 evaluaciones)</Text>
           </View>
 
-          {/* Descripción */}
           {selectedProduct?.description && (
             <Text style={styles.description}>{selectedProduct.description}</Text>
           )}
 
-          {/* Diseño (Colores) */}
           <Text style={styles.sectionTitle}>Diseño</Text>
           <View style={styles.colorsContainer}>
             <TouchableOpacity
@@ -327,7 +352,6 @@ export default function BandanasScreen({ navigation }) {
             />
           </View>
 
-          {/* Talla */}
           <Text style={styles.sectionTitle}>Talla</Text>
           <View style={styles.sizesContainer}>
             {['XS', 'S', 'M', 'L'].map((size) => (
@@ -347,7 +371,6 @@ export default function BandanasScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Guía de tallas */}
           <TouchableOpacity 
             style={styles.sizeGuide}
             onPress={() => setShowSizeGuide(true)}
@@ -356,7 +379,6 @@ export default function BandanasScreen({ navigation }) {
             <Text style={styles.sizeGuideText}>Guía de tallas</Text>
           </TouchableOpacity>
 
-          {/* Modal/Overlay para la guía de tallas */}
           {showSizeGuide && (
             <View style={styles.sizeGuideOverlay}>
               <View style={styles.sizeGuideModal}>
@@ -375,7 +397,6 @@ export default function BandanasScreen({ navigation }) {
             </View>
           )}
 
-          {/* Nombre del perrito */}
           <View style={styles.nameContainer}>
             <Text style={styles.sectionTitle}>Nombre</Text>
             <TouchableOpacity 
@@ -399,7 +420,6 @@ export default function BandanasScreen({ navigation }) {
             />
           )}
 
-          {/* Cantidad */}
           <Text style={styles.sectionTitle}>Cantidad</Text>
           <View style={styles.quantityContainer}>
             <TouchableOpacity 
@@ -421,12 +441,11 @@ export default function BandanasScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Botones de acción con cantidad integrada */}
       <View style={styles.actionButtons}>
-  <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
-    <Text style={styles.addToCartText}>Añadir al carrito</Text>
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
+          <Text style={styles.addToCartText}>Añadir al carrito</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -464,11 +483,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addToCartButtonFull: {
-  backgroundColor: '#FF9F43',
-  paddingVertical: 15,
-  borderRadius: 25,
-  width: '100%',
-},
+    backgroundColor: '#FF9F43',
+    paddingVertical: 15,
+    borderRadius: 25,
+    width: '100%',
+  },
   retryButton: {
     backgroundColor: '#2c5aa0',
     padding: 10,
@@ -480,24 +499,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   header: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingHorizontal: 20,
-  paddingVertical: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: '#E0E0E0',
-  marginTop: -40,
-},
-headerTitle: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  textAlign: 'center',
-  fontSize: 18,
-  fontWeight: 'bold',
-  color: '#333',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   noProductsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -508,7 +550,18 @@ headerTitle: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginTop: 15,
     marginBottom: 20,
+  },
+  clearSearchButton: {
+    backgroundColor: '#2c5aa0',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  clearSearchButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
   },
   productsList: {
     flex: 1,
@@ -782,27 +835,7 @@ headerTitle: {
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-
-  actionButtonsContainer: {
-    gap: 10,
-  },
-  addToCartButton: {
-    backgroundColor: '#FF9F43',
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
   addToCartText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  buyNowButton: {
-    backgroundColor: '#FFB3D9',
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
-  buyNowText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
