@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useFetchProducts from '../../hooks/Products/useFetchProducts.js';
 
 const { width } = Dimensions.get('window');
@@ -106,21 +107,58 @@ export default function CollarScreen({ navigation }) {
     }
   };
 
-  const addToCart = () => {
+ const addToCart = async () => {
+  try {
+    // Preparar el item para el carrito
+    const cartItem = {
+      _id: selectedProduct.id,
+      id: selectedProduct.id,
+      name: selectedProduct.title,
+      nameProduct: selectedProduct.title,
+      price: selectedProduct.price,
+      quantity: quantity,
+      subtotal: selectedProduct.price * quantity,
+      talla: selectedSize,
+      color: selectedProduct.colors[selectedColor]?.name || null,
+      image: selectedProduct.image.uri,
+      productInfo: {
+        description: selectedProduct.description,
+        designImages: selectedProduct.images.map(img => img.uri)
+      }
+    };
+
+    // Obtener carrito actual
+    const savedCart = await AsyncStorage.getItem('bandoggie_cart');
+    let currentCart = [];
+    
+    if (savedCart) {
+      currentCart = JSON.parse(savedCart);
+    }
+
+    // Agregar nuevo item
+    currentCart.push(cartItem);
+
+    // Guardar carrito actualizado
+    await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
+
+    // Mostrar toast de éxito
     Toast.show({
       type: 'success',
       text1: 'Éxito',
       text2: `${selectedProduct.title} agregado al carrito`
     });
-  };
 
-  const buyNow = () => {
+    console.log('✅ Producto agregado al carrito:', cartItem);
+  } catch (error) {
+    console.error('Error al agregar al carrito:', error);
     Toast.show({
-      type: 'success',
-      text1: 'Comprar',
-      text2: `Procesando compra de ${selectedProduct.title}`
+      type: 'error',
+      text1: 'Error',
+      text2: 'No se pudo agregar al carrito'
     });
-  };
+  }
+};
+ 
 
   // Vista de lista de productos
   if (currentView === 'list') {
@@ -352,34 +390,11 @@ export default function CollarScreen({ navigation }) {
       </ScrollView>
 
       {/* Botones de acción con cantidad integrada */}
-      <View style={styles.actionButtons}>
-        <View style={styles.bottomQuantityContainer}>
-          <TouchableOpacity 
-            style={[styles.bottomQuantityButton, quantity <= 1 && styles.quantityButtonDisabled]} 
-            onPress={decreaseQuantity}
-            disabled={quantity <= 1}
-          >
-            <Text style={[styles.bottomQuantityButtonText, quantity <= 1 && styles.quantityButtonTextDisabled]}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.bottomQuantityText}>{quantity}</Text>
-          <TouchableOpacity 
-            style={[styles.bottomQuantityButton, quantity >= 5 && styles.quantityButtonDisabled]} 
-            onPress={increaseQuantity}
-            disabled={quantity >= 5}
-          >
-            <Text style={[styles.bottomQuantityButtonText, quantity >= 5 && styles.quantityButtonTextDisabled]}>+</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.addToCartButton} onPress={addToCart}>
-            <Text style={styles.addToCartText}>Añadir al carrito</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.buyNowButton} onPress={buyNow}>
-            <Text style={styles.buyNowText}>Comprar ahora</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+     <View style={styles.actionButtons}>
+  <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
+    <Text style={styles.addToCartText}>Añadir al carrito</Text>
+  </TouchableOpacity>
+</View>
     </SafeAreaView>
   );
 }
@@ -479,6 +494,12 @@ headerTitle: {
     shadowRadius: 4,
     width: (width - 40) / 2,
   },
+  addToCartButtonFull: {
+  backgroundColor: '#FF9F43',
+  paddingVertical: 15,
+  borderRadius: 25,
+  width: '100%',
+},
   productImage: {
     width: '100%',
     height: 150,
@@ -720,34 +741,7 @@ headerTitle: {
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  bottomQuantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginBottom: 15,
-  },
-  bottomQuantityButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  bottomQuantityButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  bottomQuantityText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginHorizontal: 20,
-    minWidth: 30,
-    textAlign: 'center',
-  },
+  
   actionButtonsContainer: {
     gap: 10,
   },

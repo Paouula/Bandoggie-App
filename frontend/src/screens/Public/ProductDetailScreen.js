@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useFetchProductsByCategory from '../hooks/Products/useFetchByCategory';
 
 const { width } = Dimensions.get('window');
@@ -58,21 +59,84 @@ export default function ProductDetailScreen({ navigation, route }) {
     if (quantity > 1) setQuantity(quantity - 1);
   };
 
-  const addToCart = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Añadido al carrito',
-      text2: `${product.nameProduct} agregado correctamente`,
-    });
-  };
+  const addToCart = async () => {
+  try {
+    // Validar que selectedProduct existe
+    if (!selectedProduct) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'No hay producto seleccionado'
+      });
+      return;
+    }
 
-  const buyNow = () => {
+    console.log('📦 Producto a agregar:', selectedProduct);
+
+    // Preparar el item para el carrito con validaciones
+    const cartItem = {
+      _id: selectedProduct.id || selectedProduct._id,
+      id: selectedProduct.id || selectedProduct._id,
+      name: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+      nameProduct: selectedProduct.title || selectedProduct.nameProduct || 'Producto',
+      price: parseFloat(selectedProduct.price) || 0,
+      quantity: parseInt(quantity) || 1,
+      subtotal: (parseFloat(selectedProduct.price) || 0) * (parseInt(quantity) || 1),
+      talla: selectedSize || 'M',
+      color: selectedProduct.colors?.[selectedColor]?.name || null,
+      image: selectedProduct.image?.uri || selectedProduct.image || null,
+      productInfo: {
+        description: selectedProduct.description || '',
+        designImages: selectedProduct.images?.map(img => img.uri || img) || []
+      }
+    };
+
+    console.log('✅ Item preparado:', cartItem);
+
+    // Obtener carrito actual
+    const savedCart = await AsyncStorage.getItem('bandoggie_cart');
+    let currentCart = [];
+    
+    if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
+      try {
+        currentCart = JSON.parse(savedCart);
+        if (!Array.isArray(currentCart)) {
+          currentCart = [];
+        }
+      } catch (e) {
+        console.error('Error parsing cart:', e);
+        currentCart = [];
+      }
+    }
+
+    console.log('🛒 Carrito actual:', currentCart);
+
+    // Agregar nuevo item
+    currentCart.push(cartItem);
+
+    // Guardar carrito actualizado
+    await AsyncStorage.setItem('bandoggie_cart', JSON.stringify(currentCart));
+
+    console.log('💾 Carrito guardado con', currentCart.length, 'items');
+
+    // Mostrar toast de éxito
     Toast.show({
       type: 'success',
-      text1: 'Comprar ahora',
-      text2: `Procesando compra de ${product.nameProduct}`,
+      text1: 'Éxito',
+      text2: `${cartItem.name} agregado al carrito`
     });
-  };
+
+  } catch (error) {
+    console.error('❌ Error al agregar al carrito:', error);
+    console.error('Stack:', error.stack);
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: 'No se pudo agregar al carrito'
+    });
+  }
+};
+
 
   const renderStars = () => {
     return (
@@ -288,33 +352,11 @@ export default function ProductDetailScreen({ navigation, route }) {
       </ScrollView>
 
       {/* Botones de acción */}
-      <View style={styles.actionContainer}>
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity 
-            style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]} 
-            onPress={decreaseQuantity}
-            disabled={quantity <= 1}
-          >
-            <Text style={[styles.quantityButtonText, quantity <= 1 && styles.quantityButtonTextDisabled]}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.quantityText}>{quantity}</Text>
-          <TouchableOpacity 
-            style={styles.quantityButton} 
-            onPress={increaseQuantity}
-          >
-            <Text style={styles.quantityButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.addToCartButton} onPress={addToCart}>
-            <Text style={styles.addToCartText}>Añadir al carrito</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.buyNowButton} onPress={buyNow}>
-            <Text style={styles.buyNowText}>Comprar ahora</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={styles.actionButtons}>
+  <TouchableOpacity style={styles.addToCartButtonFull} onPress={addToCart}>
+    <Text style={styles.addToCartText}>Añadir al carrito</Text>
+  </TouchableOpacity>
+</View>
     </SafeAreaView>
   );
 }
@@ -599,6 +641,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     gap: 10,
   },
+  addToCartButtonFull: {
+  backgroundColor: '#FF9F43',
+  paddingVertical: 15,
+  borderRadius: 25,
+  width: '100%',
+},
   addToCartButton: {
     backgroundColor: '#FFB84D',
     paddingVertical: 15,

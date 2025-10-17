@@ -91,11 +91,13 @@ function CustomDrawerContent({ navigation }) {
           style={styles.logo}
           resizeMode="contain"
         />
+    {/*
         {user && (
           <Text style={styles.userInfo}>
             {user.name || user.email}
           </Text>
-        )}
+          
+        )} */}
       </View>
 
       <View style={styles.drawerContent}>
@@ -137,13 +139,7 @@ const styles = StyleSheet.create({
     height: 110,
     marginBottom: -10,
   },
-  appName: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   drawerContent: {
-    flex: 1,
     paddingTop: 20,
   },
   drawerItem: {
@@ -155,5 +151,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     fontFamily: 'BalooBhaijaan2_700Bold',
+  },
+  logoutContainer: {
+    paddingVertical: 30,
+    paddingHorizontal: 0,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
   },
 });
