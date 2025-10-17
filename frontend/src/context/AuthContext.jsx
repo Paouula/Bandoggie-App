@@ -15,20 +15,131 @@ export const AuthProvider = ({ children }) => {
 
   const { handleLogin } = useFetchLogin();
 
+  // Función para cargar el perfil completo del usuario
+  const loadUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      
+      console.log('🔑 Token encontrado:', token ? 'Sí' : 'No');
+      
+      if (!token) {
+        console.warn('⚠️ No hay token, no se puede cargar perfil');
+        return null;
+      }
+
+      console.log('📡 Cargando perfil desde: auth/me');
+
+      const response = await API_FETCH_JSON('auth/me', {
+        method: 'GET',
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+
+      console.log('🔍 Respuesta completa del servidor:', JSON.stringify(response, null, 2));
+
+      if (response && (response.user || response._id || response.id)) {
+        // La respuesta puede venir como { user: {...} } o directamente {...}
+        const userData = response.user || response;
+        
+        const fullUserData = {
+          id: userData._id || userData.id,
+          userType: userData.userType,
+          email: userData.email,
+          image: userData.image,
+          
+          // Campos de cliente
+          name: userData.name || '',
+          phone: userData.phone || '',
+          address: userData.address || '',
+          birthday: userData.birthday || '',
+          
+          // Campos de veterinario
+          nameVet: userData.nameVet || '',
+          locationVet: userData.locationVet || '',
+          nitVet: userData.nitVet || '',
+          
+          // Campos de empleado
+          nameEmployees: userData.nameEmployees || '',
+          phoneEmployees: userData.phoneEmployees || '',
+          addressEmployees: userData.addressEmployees || '',
+          duiEmployees: userData.duiEmployees || '',
+          hireDateEmployee: userData.hireDateEmployee || '',
+          dateOfBirth: userData.dateOfBirth || '',
+        };
+        
+        console.log('✅ Usuario completo a guardar:', JSON.stringify(fullUserData, null, 2));
+        
+        setUser(fullUserData);
+        await AsyncStorage.setItem("user", JSON.stringify(fullUserData));
+        
+        return fullUserData;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Error loading user profile:', error);
+      Toast.show({ 
+        type: "error", 
+        text1: "Error al cargar perfil",
+        text2: error.message 
+      });
+      return null;
+    }
+  };
+
   const Login = async (email, password) => {
     try {
       const data = await handleLogin(email, password);
 
+      console.log('📝 Datos COMPLETOS del login:', JSON.stringify(data, null, 2));
+
+      // Construir userData con TODOS los campos que vienen del servidor
       const userData = {
-        id: data.user?.id,
+        id: data.user?._id || data.user?.id,
         email: data.user?.email || email,
-        userType: data.userType,
-        name: data.user?.name,
+        userType: data.userType || data.user?.userType,
+        image: data.user?.image || '',
+        
+        // Campos de cliente
+        name: data.user?.name || '',
+        phone: data.user?.phone || '',
+        address: data.user?.address || '',
+        birthday: data.user?.birthday || '',
+        
+        // Campos de veterinario
+        nameVet: data.user?.nameVet || '',
+        locationVet: data.user?.locationVet || '',
+        nitVet: data.user?.nitVet || '',
+        
+        // Campos de empleado
+        nameEmployees: data.user?.nameEmployees || '',
+        phoneEmployees: data.user?.phoneEmployees || '',
+        addressEmployees: data.user?.addressEmployees || '',
+        duiEmployees: data.user?.duiEmployees || '',
+        hireDateEmployee: data.user?.hireDateEmployee || '',
+        dateOfBirth: data.user?.dateOfBirth || '',
       };
 
+      console.log('👤 userData FINAL construido:', JSON.stringify(userData, null, 2));
+
+      // Guardar inmediatamente en el estado
       setUser(userData);
+      
+      // Guardar en AsyncStorage
       await AsyncStorage.setItem("user", JSON.stringify(userData));
-      clearVerificationInfo();
+      
+      // Verificar que se guardó
+      const verificar = await AsyncStorage.getItem("user");
+      console.log('💾 Verificación - Usuario en AsyncStorage:', verificar);
+      
+      await clearVerificationInfo();
+
+      // Cargar perfil completo desde auth/me para asegurar datos actualizados
+      await loadUserProfile();
+
+      console.log('✅ Login completado');
 
       return {
         success: true,
@@ -37,6 +148,7 @@ export const AuthProvider = ({ children }) => {
         user: userData,
       };
     } catch (error) {
+      console.error('❌ Error en Login:', error);
       return {
         success: false,
         message: error.message || "Error al iniciar sesión",
@@ -94,6 +206,8 @@ export const AuthProvider = ({ children }) => {
       // Verificar si hay token antes de hacer la petición
       const token = await AsyncStorage.getItem('authToken');
       
+      console.log('🔐 checkAuthStatus - Token:', token ? 'Existe' : 'No existe');
+      
       if (!token) {
         setUser(null);
         return false;
@@ -107,16 +221,28 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
+      console.log('📱 Respuesta de auth/me:', response);
+
       if (response.user) {
         const userData = {
-          id: response.user.id,
+          id: response.user._id || response.user.id,
           email: response.user.email,
           userType: response.user.userType,
-          name: response.user.name,
+          name: response.user.name || response.user.nameVet || response.user.nameEmployees,
+          phone: response.user.phone || response.user.phoneEmployees,
+          address: response.user.address || response.user.addressEmployees,
+          birthday: response.user.birthday || response.user.dateOfBirth,
+          image: response.user.image,
         };
 
+        console.log('✅ Usuario autenticado:', userData);
+
+        // Guardar datos básicos
         setUser(userData);
         await AsyncStorage.setItem("user", JSON.stringify(userData));
+
+        // Cargar perfil completo
+        await loadUserProfile();
 
         const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
         if (storedVerificationInfo) {
@@ -127,7 +253,7 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('❌ Error checking auth status:', error);
       // Si falla la autenticación, limpiar datos
       await AsyncStorage.removeItem("user");
       await AsyncStorage.removeItem("authToken");
@@ -175,6 +301,85 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para actualizar el perfil del usuario
+  const updateProfile = async (updatedData) => {
+    try {
+      if (!user || !user.id) {
+        throw new Error("No hay usuario autenticado");
+      }
+
+      const token = await AsyncStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error("No hay token de autenticación");
+      }
+
+      // Filtrar datos vacíos
+      const dataToSend = {};
+      Object.keys(updatedData).forEach((key) => {
+        if (
+          updatedData[key] !== "" &&
+          updatedData[key] !== null &&
+          updatedData[key] !== undefined
+        ) {
+          dataToSend[key] = updatedData[key];
+        }
+      });
+
+      if (Object.keys(dataToSend).length === 0) {
+        Toast.show({
+          type: 'error',
+          text1: 'No hay cambios para guardar'
+        });
+        return { success: false };
+      }
+
+      console.log('📤 Actualizando perfil con:', JSON.stringify(dataToSend, null, 2));
+
+      const response = await API_FETCH_JSON('auth/me/update', {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      console.log('📥 Respuesta de actualización:', JSON.stringify(response, null, 2));
+
+      if (response) {
+        // Recargar el perfil completo desde el servidor para asegurar sincronización
+        const updatedProfile = await loadUserProfile();
+        
+        Toast.show({ 
+          type: "success", 
+          text1: "Perfil actualizado correctamente" 
+        });
+        
+        return { success: true, data: updatedProfile };
+      } else {
+        Toast.show({ 
+          type: "error", 
+          text1: "No se pudo actualizar el perfil" 
+        });
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("❌ Error al actualizar el perfil:", error);
+      Toast.show({ 
+        type: "error", 
+        text1: "Error al actualizar el perfil",
+        text2: error.message 
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Función para refrescar el perfil del usuario actual
+  const refreshUserProfile = async () => {
+    return await loadUserProfile();
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -210,7 +415,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
 
-        // 4. Verificar estado en el servidor
+        // 4. Verificar estado en el servidor (esto también carga el perfil completo)
         await checkAuthStatus();
         setLoadingUser(false);
 
@@ -241,6 +446,9 @@ export const AuthProvider = ({ children }) => {
     updateVerificationInfo,
     clearVerificationInfo,
     checkPendingVerification,
+    loadUserProfile,
+    updateProfile,
+    refreshUserProfile,
     isEmployee: () => user?.userType === "employee" || user?.userType === "admin",
     isVet: () => user?.userType === "vet",
     isClient: () => user?.userType === "client",

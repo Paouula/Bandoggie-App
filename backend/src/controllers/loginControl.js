@@ -73,7 +73,7 @@ loginController.login = async (req, res) => {
 
         // Finalmente, decimos que el login fue exitoso y enviamos qué tipo de usuario es
         return res.status(200).json({
-          message: "Login exitoso",
+          message: "Login exitoso6",
           userType,
           token, // Agregar esta línea
           user: { 
