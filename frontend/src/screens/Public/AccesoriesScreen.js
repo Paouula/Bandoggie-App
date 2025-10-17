@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useFetchProducts from '../../hooks/Products/useFetchProducts.js';
+import SearchComponent from '../../components/SearchComponent/SearchComponent';
 
 const { width } = Dimensions.get('window');
 
@@ -211,12 +212,15 @@ export default function AccesoriesScreen({ navigation }) {
   if (currentView === 'list') {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Accesorios</Text>
-          <TouchableOpacity>
-            <Ionicons name="search" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
+     <View style={styles.header}>
+  <Text style={styles.headerTitle}>Accesorios</Text>
+</View>
+
+<View style={styles.headerSearch}>
+  <TouchableOpacity>
+    <SearchComponent name="search" size={24} color="#333" />
+  </TouchableOpacity>
+</View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -437,17 +441,25 @@ const styles = StyleSheet.create({
   paddingVertical: 15,
   borderBottomWidth: 1,
   borderBottomColor: '#E0E0E0',
-  marginTop: -40,
 },
 headerTitle: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  textAlign: 'center',
   fontSize: 18,
   fontWeight: 'bold',
   color: '#333',
+  textAlign: 'center',
+  flex: 1,
 },
+headerSearch: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+},
+productsList: {
+  flex: 1,
+  paddingHorizontal: 20,
+},
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -506,6 +518,7 @@ headerTitle: {
   productsList: {
     flex: 1,
     paddingHorizontal: 20,
+    marginTop:20,
   },
   productsGrid: {
     flexDirection: 'row',

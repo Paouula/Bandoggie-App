@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-// CORREGIDO: Importación consistente con la exportación
 import useFetchLogin from '../hooks/Login/useFetchLogin'; 
 import { API_FETCH_JSON } from '../config';
 
@@ -45,26 +44,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout sin reset de navegación (App.js maneja el cambio automáticamente)
   const logout = async () => {
     try {
-      await API_FETCH_JSON("logout", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
+      // Obtener token para logout
+      const token = await AsyncStorage.getItem('authToken');
+      
+      if (token) {
+        try {
+          await API_FETCH_JSON("auth/logout", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+          });
+        } catch (logoutError) {
+          console.log('Error en logout del servidor (ignorado)');
+        }
+      }
 
       Toast.show({ type: "success", text1: "Sesión cerrada correctamente" });
     } catch (error) {
       Toast.show({ type: "error", text1: "Error al cerrar sesión" });
     } finally {
-      // Limpia el estado local
+      // Limpia todo el estado local
       await AsyncStorage.removeItem("user");
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("rememberMe");
       await AsyncStorage.removeItem("verificationInfo");
       setUser(null);
       setVerificationInfo({ email: "", role: "" });
       setPendingVerification(false);
-      // App.js detectará el cambio y mostrará AuthNavigator automáticamente
     }
   };
 
@@ -81,9 +91,20 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      // Verificar si hay token antes de hacer la petición
+      const token = await AsyncStorage.getItem('authToken');
+      
+      if (!token) {
+        setUser(null);
+        return false;
+      }
+
       const response = await API_FETCH_JSON("auth/me", {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        method: 'GET',
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       if (response.user) {
@@ -106,15 +127,31 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     } catch (error) {
+      console.error('Error checking auth status:', error);
+      // Si falla la autenticación, limpiar datos
+      await AsyncStorage.removeItem("user");
+      await AsyncStorage.removeItem("authToken");
+      setUser(null);
       return false;
     }
   };
 
   const checkPendingVerification = async () => {
     try {
+      // Verificar si hay token antes de hacer la petición
+      const token = await AsyncStorage.getItem('authToken');
+      
+      if (!token) {
+        setPendingVerification(false);
+        return false;
+      }
+
       const response = await API_FETCH_JSON("auth/pending-verification", {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        method: 'GET',
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       const hasPendingVerification = response.pending || false;
@@ -132,6 +169,7 @@ export const AuthProvider = ({ children }) => {
 
       return hasPendingVerification;
     } catch (error) {
+      console.error('Error checking pending verification:', error);
       setPendingVerification(false);
       return false;
     }
@@ -139,29 +177,50 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedUser = await AsyncStorage.getItem("user");
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch {
-          await AsyncStorage.removeItem("user");
+      try {
+        // 1. Verificar si hay token
+        const token = await AsyncStorage.getItem('authToken');
+        
+        if (!token) {
+          // No hay token, no hacer peticiones
+          setUser(null);
+          setPendingVerification(false);
+          setLoadingUser(false);
+          setLoadingVerification(false);
+          return;
         }
-      }
 
-      const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
-      if (storedVerificationInfo) {
-        try {
-          setVerificationInfo(JSON.parse(storedVerificationInfo));
-        } catch {
-          await AsyncStorage.removeItem("verificationInfo");
+        // 2. Si hay token, cargar usuario almacenado
+        const storedUser = await AsyncStorage.getItem("user");
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch {
+            await AsyncStorage.removeItem("user");
+          }
         }
+
+        // 3. Verificar información de verificación
+        const storedVerificationInfo = await AsyncStorage.getItem("verificationInfo");
+        if (storedVerificationInfo) {
+          try {
+            setVerificationInfo(JSON.parse(storedVerificationInfo));
+          } catch {
+            await AsyncStorage.removeItem("verificationInfo");
+          }
+        }
+
+        // 4. Verificar estado en el servidor
+        await checkAuthStatus();
+        setLoadingUser(false);
+
+        await checkPendingVerification();
+        setLoadingVerification(false);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setLoadingUser(false);
+        setLoadingVerification(false);
       }
-
-      await checkAuthStatus();
-      setLoadingUser(false);
-
-      await checkPendingVerification();
-      setLoadingVerification(false);
     };
 
     initializeAuth();
