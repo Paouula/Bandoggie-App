@@ -12,16 +12,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import useFetchUser from '../../hooks/Profile/useFetchProfileCard';
-import ProfileCard from '../../components/Profile/ProfileCard'; 
 import { styles } from './ProfileScreen.styles.js';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, loadingUser, logout: authLogout } = useAuth();
+  const { user, loadingUser, logout: authLogout, updateUserData: updateAuthUserData } = useAuth();
   
   const {
     userInfo,
     isLoading: profileLoading,
-    updateUserData,
+    updateUserData: updateProfileServer,
     fetchUserData,
   } = useFetchUser();
 
@@ -30,9 +29,11 @@ const ProfileScreen = ({ navigation }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [editedUserInfo, setEditedUserInfo] = useState({});
 
-  const currentRole = userInfo?.userType || user?.userType || 'client';
+  // Usar primero los datos del servidor (userInfo), luego del contexto (user)
+  const displayUserInfo = (userInfo && userInfo._id) ? userInfo : user;
+  const currentRole = displayUserInfo?.userType || user?.userType || 'client';
 
-  // Configuración de menú según el rol (sin chat)
+  // Configuración de menú según el rol
   const menuConfig = {
     client: [
       { id: 1, icon: 'basket-outline', text: 'Tus pedidos', badge: null, route: 'Pedidos' },
@@ -58,7 +59,14 @@ const ProfileScreen = ({ navigation }) => {
     }
   }, [loadingUser, user, navigation]);
 
-  // Sincronizar editedUserInfo con userInfo cuando cambie
+  // Inicializar editedUserInfo con datos disponibles
+  useEffect(() => {
+    if (displayUserInfo) {
+      setEditedUserInfo(displayUserInfo);
+    }
+  }, [displayUserInfo]);
+
+  // Sincronizar cuando cambie userInfo del servidor
   useEffect(() => {
     if (userInfo && userInfo._id) {
       setEditedUserInfo(userInfo);
@@ -105,7 +113,8 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleEditToggle = () => {
     if (isEditing) {
-      setEditedUserInfo(userInfo);
+      // Si cancela, restaurar los datos originales
+      setEditedUserInfo(displayUserInfo);
     }
     setIsEditing(!isEditing);
   };
@@ -117,17 +126,39 @@ const ProfileScreen = ({ navigation }) => {
     }));
   };
 
+  /**
+   * Guardar perfil en el servidor
+   * Usa AMBAS funciones: del contexto y del hook para asegurar sincronización
+   */
   const handleSaveProfile = async () => {
     setIsSaving(true);
+    
     try {
-      const success = await updateUserData(editedUserInfo);
-      if (success) {
+      // 1. Guardar en el servidor usando el hook useFetchUser
+      const serverSuccess = await updateProfileServer(editedUserInfo);
+      
+      if (serverSuccess) {
+        // 2. Actualizar el contexto con los datos del servidor
+        await updateAuthUserData(editedUserInfo);
+        
+        // 3. Refrescar datos del servidor para asegurar sincronización
+        await fetchUserData();
+        
         setIsEditing(false);
-        Alert.alert('Éxito', 'Perfil actualizado correctamente');
+        
+        Alert.alert('Éxito', 'Perfil actualizado correctamente en el servidor');
+      } else {
+        Alert.alert(
+          'Error', 
+          'No se pudo actualizar el perfil en el servidor. Por favor, intenta nuevamente.'
+        );
       }
     } catch (error) {
       console.error('Error al guardar:', error);
-      Alert.alert('Error', 'No se pudo actualizar el perfil');
+      Alert.alert(
+        'Error', 
+        'Ocurrió un error al actualizar el perfil. Verifica tu conexión a internet.'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -215,8 +246,8 @@ const ProfileScreen = ({ navigation }) => {
     };
   };
 
-  // Mostrar loading mientras carga el usuario o el perfil inicial
-  if (loadingUser || (profileLoading && !editedUserInfo._id)) {
+  // Mostrar loading solo si realmente está cargando y no hay datos disponibles
+  if (loadingUser && !user) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF9C46" />
@@ -225,53 +256,67 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  // Si no hay usuario después de cargar, mostrar loading (mientras redirige)
-  if (!user) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF9C46" />
-        <Text style={styles.loadingText}>Redirigiendo...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      {(isLoggingOut || isSaving) && (
+      {/* Overlay de carga mientras se guarda en el servidor */}
+      {isSaving && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color="#FF9C46" />
-            <Text style={styles.loadingText}>
-              {isLoggingOut ? 'Cerrando sesión...' : 'Guardando cambios...'}
-            </Text>
+            <Text style={styles.loadingText}>Guardando en el servidor...</Text>
           </View>
         </View>
       )}
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Mensaje de bienvenida */}
         <View style={styles.welcomeSection}>
           <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>
         </View>
 
-        {/* Componente ProfileCard - NUEVO */}
-        <ProfileCard
-          userInfo={editedUserInfo}
-          isEditing={isEditing}
-          onEditToggle={handleEditToggle}
-          onUpdateProfile={handleSaveProfile}
-          isLoading={isSaving}
-          isAuthenticated={!!user}
-        />
-
-        {/* Tarjeta de perfil original - ahora con los campos de edición */}
+        {/* Tarjeta de perfil */}
         <View style={styles.profileCard}>
+          <View style={styles.profileImageContainer}>
+            <Image 
+              source={getProfileImage()}
+              style={styles.profileImage}
+            />
+          </View>
+
           <View style={styles.formSection}>
-            <Text style={styles.label}>Nombre</Text>
+            {/* Botones de editar/guardar */}
+            {!isEditing ? (
+              <TouchableOpacity 
+                style={styles.editButton} 
+                onPress={handleEditToggle}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.editButtonText}>Editar Perfil</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.editButtonsContainer}>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.cancelButton]} 
+                  onPress={handleEditToggle}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.saveButton]} 
+                  onPress={handleSaveProfile}
+                  disabled={isSaving}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="checkmark-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={styles.editButtonText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Campos del formulario */}
+            <Text style={styles.label}>Nombre Completo</Text>
             <TextInput
               style={[styles.input, isEditing && styles.inputEditable]}
               value={getNameValue()}
@@ -488,7 +533,7 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Información adicional */}
         <View style={styles.footerInfo}>
-          <Text style={styles.footerText}>ID: {editedUserInfo?._id || user?.id || 'N/A'}</Text>
+          <Text style={styles.footerText}>ID: {editedUserInfo?._id || editedUserInfo?.id || user?.id || 'N/A'}</Text>
         </View>
       </ScrollView>
     </View>
